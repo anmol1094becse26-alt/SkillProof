@@ -4,7 +4,6 @@ export default function RoleSwitcher({ currentRole, onChange }) {
   const roles = [
     { id: 'student', label: 'Candidate', icon: 'school' },
     { id: 'employer', label: 'Recruiter', icon: 'business_center' },
-    { id: 'university', label: 'Reviewer', icon: 'account_balance' },
   ];
 
   return (
@@ -13,7 +12,7 @@ export default function RoleSwitcher({ currentRole, onChange }) {
         <button
           key={r.id}
           onClick={() => onChange(r.id)}
-          className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all ${
+          className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
             currentRole === r.id
               ? 'bg-white text-brand shadow-sm font-bold'
               : 'text-slate-600 hover:text-ink'
