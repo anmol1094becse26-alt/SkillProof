@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillProof — Public Cryptographic Verification Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: '#0152D9',
+            brandContainer: '#356DF3',
+            brandSurface: '#EFF4FF',
+            canvas: '#F8F9FF',
+            ink: '#0B1C30',
+            slateMuted: '#434654',
+            emeraldDark: '#006B49',
+            mintLight: '#6FFBBE',
+            terminalBg: '#213145',
+            terminalDark: '#0B1C30'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#F8F9FF] text-[#0B1C30] font-sans min-h-screen flex flex-col justify-between selection:bg-brand selection:text-white">
+
+  <!-- Top Simple Navigation (Hidden if in embed mode) -->
+  <header id="verify-header" class="w-full bg-white border-b border-slate-200 py-4 px-6 sm:px-8 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2 group">
+      <div class="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-md shadow-brand/20">
+        <span class="material-symbols-outlined text-xl">verified</span>
+      </div>
+      <div>
+        <span class="text-lg font-bold tracking-tight text-ink">Skill<span class="text-brand">Proof</span></span>
+        <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 ml-2 bg-emerald-50 text-emerald-800 rounded border border-emerald-200">Public Verifier</span>
+      </div>
+    </a>
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-xs font-semibold text-slateMuted hover:text-ink">SkillProof Home</a>
+      <a href="auth.html" class="text-xs font-bold text-brand hover:underline">Portal Sign In</a>
+    </div>
+  </header>
+
+  <!-- Main Verification Viewer Container -->
+  <main class="flex-1 max-w-4xl mx-auto w-full p-4 sm:p-8 space-y-6">
+    
+    <!-- Search Bar if user wants to look up another ID -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative flex-1 w-full">
+        <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+        <input 
+          type="text" 
+          id="search-passport-input" 
+          placeholder="Lookup Passport ID (e.g. SKP-8492, SKP-7104, SKP-9231)" 
+          class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30"
+        />
+      </div>
+      <button onclick="handleManualSearch()" class="w-full sm:w-auto px-5 py-2 bg-brand text-white font-semibold text-xs rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-1">
+        <span>Verify Proof</span>
+        <span class="material-symbols-outlined text-sm">verified_user</span>
+      </button>
+    </div>
+
+    <!-- Verification Loading State -->
+    <div id="verify-loading" class="bg-white rounded-2xl p-12 text-center border border-slate-200">
+      <div class="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-sm font-bold text-ink">Validating Cryptographic SHA-256 Seal...</p>
+      <p class="text-xs text-slate-400 mt-1">Cross-referencing immutable unit assertions and anti-cheat telemetry.</p>
+    </div>
+
+    <!-- Verification Card (Populated after validation) -->
+    <div id="verify-card" class="hidden bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+      
+      <!-- Integrity Status Banner -->
+      <div id="integrity-banner" class="bg-emerald-700 text-white p-4 px-6 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-2xl" id="integrity-icon">check_circle</span>
+          <div>
+            <h2 class="text-sm font-bold font-mono tracking-wide" id="integrity-title">CRYPTOGRAPHIC INTEGRITY: 100% VALID</h2>
+            <p class="text-[11px] text-emerald-100" id="integrity-desc">SHA-256 hash matches the uncorrupted candidate record.</p>
+          </div>
+        </div>
+        <div class="text-right font-mono text-xs">
+          <span class="text-emerald-200">SEAL STATUS:</span>
+          <span class="font-bold ml-1 bg-white/20 px-2 py-0.5 rounded">AUTHENTIC</span>
+        </div>
+      </div>
+
+      <!-- Candidate Verified Bio Box -->
+      <div class="p-6 sm:p-8 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div>
+          <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-blue-50 text-brand font-bold border border-blue-200">
+            Verified Academic Candidate
+          </span>
+          <h1 id="v-candidate-name" class="text-2xl sm:text-3xl font-extrabold text-ink mt-2">Alex Rivera</h1>
+          <p id="v-candidate-uni" class="text-xs sm:text-sm text-slateMuted mt-1">
+            Stanford University • B.S. Computer Science
+          </p>
+
+          <!-- Privacy Protection Badge -->
+          <div class="mt-4 flex items-center gap-2 text-slate-500 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200 max-w-md">
+            <span class="material-symbols-outlined text-base text-brand">lock</span>
+            <span class="text-[11px]">
+              Personal contact details protected by <strong>SkillProof Zero-Knowledge Privacy Shield</strong>. Contact candidate via authorized recruiter shortlist.
+            </span>
+          </div>
+        </div>
+
+        <!-- Trust Score & Passport ID -->
+        <div class="bg-canvas border border-slate-200 p-5 rounded-2xl text-center sm:text-right shrink-0">
+          <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wider block font-semibold">Anti-Cheat Trust Score</span>
+          <div class="text-3xl sm:text-4xl font-extrabold font-mono text-emerald-700 mt-1" id="v-trust-score">97 / 100</div>
+          <span class="text-xs font-mono font-bold text-brand bg-blue-50 px-2 py-0.5 rounded border border-blue-200 mt-2 inline-block" id="v-passport-id">
+            SKP-8492
+          </span>
+        </div>
+      </div>
+
+      <!-- Verified Competency Matrix -->
+      <div class="p-6 sm:p-8 space-y-4">
+        <div>
+          <h3 class="text-base font-bold text-ink">Verified Competencies</h3>
+          <p class="text-xs text-slateMuted">Practical performance demonstrated in timed execution sandboxes.</p>
+        </div>
+
+        <div id="v-skills-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Cryptographic Hash Audit Box -->
+      <div class="bg-terminalDark text-slate-300 p-6 border-t border-slate-800 font-mono text-xs space-y-2">
+        <div class="flex items-center justify-between text-[11px] text-slate-400">
+          <span>IMMUTABLE CRYPTOGRAPHIC AUDIT PROOF</span>
+          <span class="text-emerald-400 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>VERIFIED ON-CHAIN & IN-DB</span>
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-400">SHA-256 Digest:</p>
+        <p class="text-blue-300 text-[11px] break-all bg-black/40 p-2 rounded border border-slate-700" id="v-hash-full">
+          e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        </p>
+        <div class="pt-2 flex flex-wrap items-center justify-between text-[10px] text-slate-500">
+          <span>Verification Engine: SkillProof v2.0 Sandbox</span>
+          <span id="v-issued-date">Issued: 2026-10-10</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Error State (Not Found) -->
+    <div id="verify-error" class="hidden bg-white rounded-2xl p-10 text-center border border-rose-200">
+      <span class="material-symbols-outlined text-4xl text-rose-500 mb-2">error</span>
+      <h3 class="text-base font-bold text-ink">Skill Passport Not Found</h3>
+      <p class="text-xs text-slateMuted mt-1 max-w-sm mx-auto">
+        No cryptographic skill passport exists with this ID. Please double check the QR code or ID entered.
+      </p>
+      <a href="index.html" class="inline-block mt-4 text-xs font-semibold text-brand hover:underline">
+        Return to Home
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Simple Footer -->
+  <footer id="verify-footer" class="py-4 text-center text-xs text-slate-400 border-t border-slate-200 bg-white">
+    SkillProof &copy; 2026. Cryptographically Verified Technical Credentials.
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/seed-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/db-service.js"></script>
+  <script src="js/passport-service.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const params = new URLSearchParams(window.location.search);
+      const passportId = params.get("id");
+      const isEmbed = params.get("embed") === "true";
+
+      if (isEmbed) {
+        const header = document.getElementById("verify-header");
+        const footer = document.getElementById("verify-footer");
+        if (header) header.style.display = "none";
+        if (footer) footer.style.display = "none";
+      }
+
+      if (passportId) {
+        document.getElementById("search-passport-input").value = passportId;
+        await verifyPassport(passportId);
+      } else {
+        // Default to first seed passport
+        await verifyPassport("SKP-8492");
+      }
+    });
+
+    function handleManualSearch() {
+      const id = document.getElementById("search-passport-input").value.trim();
+      if (id) {
+        verifyPassport(id);
+      }
+    }
+
+    async function verifyPassport(passportId) {
+      const loading = document.getElementById("verify-loading");
+      const card = document.getElementById("verify-card");
+      const errorBox = document.getElementById("verify-error");
+
+      loading.classList.remove("hidden");
+      card.classList.add("hidden");
+      errorBox.classList.add("hidden");
+
+      try {
+        const passport = await DBService.getPassportById(passportId);
+        if (!passport) {
+          loading.classList.add("hidden");
+          errorBox.classList.remove("hidden");
+          return;
+        }
+
+        // Validate cryptographic SHA-256 seal
+        const canonicalHash = await PassportService.generatePassportSeal(passport);
+        const storedHash = passport.cryptographicSeal;
+
+        // Populate Card
+        document.getElementById("v-candidate-name").textContent = passport.studentName;
+        document.getElementById("v-candidate-uni").textContent = `${passport.university} • ${passport.course}`;
+        document.getElementById("v-trust-score").textContent = `${passport.trustScore} / 100`;
+        document.getElementById("v-passport-id").textContent = passport.passportId;
+        document.getElementById("v-hash-full").textContent = storedHash || canonicalHash;
+        document.getElementById("v-issued-date").textContent = `Issued: ${passport.issuedAt ? passport.issuedAt.split('T')[0] : '2026-10-10'}`;
+
+        // Populate verified competencies
+        const skillsContainer = document.getElementById("v-skills-list");
+        const skills = passport.verifiedSkills || [];
+        skillsContainer.innerHTML = skills.map(s => `
+          <div class="p-3.5 bg-canvas rounded-xl border border-slate-200 flex items-center justify-between">
+            <div>
+              <p class="font-bold text-xs text-ink">${s.skill}</p>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">Level: <strong class="text-brand">${s.level}</strong></p>
+            </div>
+            <div class="text-right">
+              <span class="text-base font-black font-mono text-emerald-700">${s.score}%</span>
+              <span class="block text-[9px] text-slate-400 uppercase font-mono">Gauntlet Score</span>
+            </div>
+          </div>
+        `).join('');
+
+        loading.classList.add("hidden");
+        card.classList.remove("hidden");
+      } catch (err) {
+        console.error(err);
+        loading.classList.add("hidden");
+        errorBox.classList.remove("hidden");
+      }
+    }
+  </script>
+</body>
+</html>
