@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillProof — Digital Skill Passport</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: '#0152D9',
+            brandContainer: '#356DF3',
+            brandSurface: '#EFF4FF',
+            canvas: '#F8F9FF',
+            ink: '#0B1C30',
+            slateMuted: '#434654',
+            emeraldDark: '#006B49',
+            mintLight: '#6FFBBE',
+            terminalBg: '#213145',
+            terminalDark: '#0B1C30'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media print {
+      body { background: white !important; }
+      header, .no-print { display: none !important; }
+      .passport-container { box-shadow: none !important; border: 1px solid #ccc !important; }
+    }
+  </style>
+</head>
+<body class="bg-[#F8F9FF] text-[#0B1C30] font-sans min-h-screen flex flex-col selection:bg-brand selection:text-white">
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="student-dashboard.html" class="flex items-center gap-2 group">
+          <div class="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm shadow-brand/20">
+            <span class="material-symbols-outlined text-xl">verified</span>
+          </div>
+          <div>
+            <span class="text-lg font-bold tracking-tight text-ink">Skill<span class="text-brand">Proof</span></span>
+            <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 ml-2 bg-blue-50 text-brand rounded border border-blue-200">Digital Passport</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="student-dashboard.html" class="text-xs font-semibold text-slateMuted hover:text-ink px-3 py-2 rounded-lg transition-colors flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">dashboard</span>
+          <span>Back to Studio</span>
+        </a>
+        <button onclick="handleDownloadPrint()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors">
+          <span class="material-symbols-outlined text-sm">print</span>
+          <span>Print / Export PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Passport View Container -->
+  <main class="flex-1 max-w-5xl mx-auto w-full p-4 sm:p-8 space-y-8">
+    
+    <!-- Passport Card Container -->
+    <div class="passport-container bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+      
+      <!-- Top Decorative & Header Banner -->
+      <div class="bg-gradient-to-r from-terminalDark via-[#162740] to-blue-950 p-6 sm:p-10 text-white relative">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+          
+          <div class="flex items-start gap-4">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-600/30 border border-blue-400/40 p-1 shrink-0 backdrop-blur-md">
+              <img id="pass-avatar" src="" alt="Student Profile" class="w-full h-full object-cover rounded-xl">
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  <span id="pass-verification-badge">Cryptographically Verified</span>
+                </span>
+              </div>
+              <h1 id="pass-student-name" class="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1">Alex Rivera</h1>
+              <p id="pass-student-education" class="text-xs sm:text-sm text-slate-300 mt-1 font-mono">
+                Stanford University • B.S. Computer Science (2026)
+              </p>
+              
+              <!-- SHA-256 Seal preview -->
+              <div class="mt-3 flex items-center gap-2 font-mono text-[10px] text-blue-300">
+                <span class="material-symbols-outlined text-xs">lock</span>
+                <span class="text-slate-400">SHA-256 SEAL:</span>
+                <span id="pass-seal-short" class="break-all opacity-80 font-mono">e3b0c44298fc1c14...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trust Score Badge -->
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-5 text-right flex flex-col justify-center items-end shrink-0">
+            <span class="text-[10px] font-mono text-slate-300 uppercase tracking-widest font-semibold">Anti-Cheat Trust Score</span>
+            <div class="text-3xl sm:text-4xl font-extrabold font-mono text-emerald-400 mt-1" id="pass-trust-score">97 / 100</div>
+            <span class="text-[11px] text-emerald-200 mt-0.5 font-medium">Mastery Tier Guaranteed</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Quick Action Toolbar -->
+      <div class="bg-slate-50 border-b border-slate-200 px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-semibold no-print">
+        <div class="flex items-center gap-2 font-mono text-slate-500">
+          <span>PASSPORT ID:</span>
+          <span id="pass-id-label" class="text-ink font-bold bg-white px-2 py-0.5 rounded border border-slate-200">SKP-8492</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="copyPublicVerificationLink()" class="px-3 py-1.5 bg-white text-slate-700 hover:text-ink border border-slate-200 rounded-lg shadow-sm flex items-center gap-1 transition-colors">
+            <span class="material-symbols-outlined text-sm text-brand">content_copy</span>
+            <span>Copy Link</span>
+          </button>
+          <button onclick="openRawProofModal()" class="px-3 py-1.5 bg-white text-slate-700 hover:text-ink border border-slate-200 rounded-lg shadow-sm flex items-center gap-1 transition-colors">
+            <span class="material-symbols-outlined text-sm text-indigo-600">data_object</span>
+            <span>Raw Proof (JSON)</span>
+          </button>
+          <button onclick="openEmbedModal()" class="px-3 py-1.5 bg-white text-slate-700 hover:text-ink border border-slate-200 rounded-lg shadow-sm flex items-center gap-1 transition-colors">
+            <span class="material-symbols-outlined text-sm text-slate-600">code</span>
+            <span>Embed Badge</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6 sm:p-10 space-y-10">
+        
+        <!-- SECTION 1: Verified Competency Matrix -->
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-ink flex items-center gap-2">
+                <span class="material-symbols-outlined text-brand">verified</span>
+                <span>Verified Competency Matrix</span>
+              </h3>
+              <p class="text-xs text-slateMuted">Each skill is cryptographically tied to algorithmic unit suites and safe sandbox runs.</p>
+            </div>
+            <span class="text-xs font-mono font-semibold text-brand bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200" id="pass-skills-count">
+              5 Skills Verified
+            </span>
+          </div>
+
+          <div id="verified-skills-matrix" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+        <!-- SECTION 2: Trust & Integrity Telemetry -->
+        <section class="bg-canvas p-6 rounded-2xl border border-slate-200">
+          <div class="mb-4">
+            <h3 class="text-sm font-bold text-ink uppercase tracking-wider font-mono flex items-center gap-2">
+              <span class="material-symbols-outlined text-emeraldDark">security</span>
+              <span>Anti-Cheat Telemetry & Execution Invariants</span>
+            </h3>
+            <p class="text-xs text-slateMuted">Multivariate verification metrics preventing code reuse, plagiarism, and metric inflation.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+              <div class="text-[11px] font-mono text-slate-400 uppercase font-semibold">AST Code Uniqueness</div>
+              <div class="text-2xl font-bold font-mono text-ink mt-1" id="telemetry-ast">98%</div>
+              <p class="text-[10px] text-slate-500 mt-0.5">Jaccard token distance against all global submissions.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+              <div class="text-[11px] font-mono text-slate-400 uppercase font-semibold">Replay Keystroke Integrity</div>
+              <div class="text-2xl font-bold font-mono text-ink mt-1" id="telemetry-replay">99%</div>
+              <p class="text-[10px] text-slate-500 mt-0.5">Sub-second typing rhythm and continuous execution cadence.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+              <div class="text-[11px] font-mono text-slate-400 uppercase font-semibold">Behavioral Defense Score</div>
+              <div class="text-2xl font-bold font-mono text-ink mt-1" id="telemetry-behavior">95%</div>
+              <p class="text-[10px] text-slate-500 mt-0.5">Complexity justification & invariant explanation quality.</p>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- SECTION 3: Cryptographic QR Verification Card -->
+        <section class="bg-gradient-to-br from-slate-900 to-terminalDark text-white p-6 sm:p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-8 border border-slate-700">
+          <div class="space-y-3 max-w-xl text-center md:text-left">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-mono font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>SCANNABLE PUBLIC PROOF</span>
+            </div>
+            <h4 class="text-xl font-bold tracking-tight">Public Third-Party Verification</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Employers or university auditors can scan this dynamic QR code to access the unforgeable cryptographic proof on <code class="text-blue-300 font-mono">verify.html</code>. Contact information is shielded to protect candidate privacy.
+            </p>
+            <div class="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <a id="btn-public-verify-link" href="verify.html?id=SKP-8492" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all shadow-md">
+                <span>Inspect Verification Portal</span>
+                <span class="material-symbols-outlined text-xs">open_in_new</span>
+              </a>
+              <button onclick="copyPublicVerificationLink()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs font-medium transition-all">
+                <span class="material-symbols-outlined text-xs">link</span>
+                <span>Copy URL</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Pure Dynamic SVG QR Code Element -->
+          <div class="bg-white p-3 rounded-2xl shadow-xl flex flex-col items-center shrink-0 border border-slate-200">
+            <div id="qr-code-container" class="flex items-center justify-center">
+              <!-- Dynamically populated SVG -->
+            </div>
+            <span class="text-[10px] font-mono text-slate-600 mt-2 font-bold tracking-wider" id="qr-passport-id-label">SKP-8492</span>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Raw Proof (JSON) Modal -->
+  <div id="raw-proof-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-sm font-bold text-ink flex items-center gap-2">
+          <span class="material-symbols-outlined text-indigo-600">data_object</span>
+          <span>Verifiable JSON Proof Payload</span>
+        </h3>
+        <button onclick="closeRawProofModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4">
+        <p class="text-xs text-slateMuted">
+          This cryptographically signed JSON schema represents the canonical state of your Skill Passport with its computed SHA-256 integrity seal.
+        </p>
+        <pre id="raw-proof-json" class="p-4 bg-terminalDark text-emerald-300 font-mono text-xs rounded-xl overflow-x-auto leading-relaxed border border-slate-700"></pre>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
+        <button onclick="copyRawProofJSON()" class="px-4 py-2 bg-brand text-white text-xs font-bold rounded-xl shadow-sm hover:bg-blue-700 transition-colors">
+          Copy JSON Payload
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embed Badge Modal -->
+  <div id="embed-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-sm font-bold text-ink flex items-center gap-2">
+          <span class="material-symbols-outlined text-slate-700">code</span>
+          <span>Embed Verifiable Badge</span>
+        </h3>
+        <button onclick="closeEmbedModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs">
+        <p class="text-slateMuted">Paste this HTML snippet into your portfolio, README, or website to show your real-time verified skills.</p>
+        <textarea id="embed-snippet-text" readonly rows="4" class="w-full p-3 font-mono text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800"></textarea>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2">
+        <button onclick="copyEmbedSnippet()" class="px-4 py-2 bg-brand text-white text-xs font-bold rounded-xl shadow-sm hover:bg-blue-700 transition-colors">
+          Copy Embed Code
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/seed-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script src="js/db-service.js"></script>
+  <script src="js/passport-service.js"></script>
+  <script src="js/notification-service.js"></script>
+
+  <script>
+    let currentUser = null;
+    let studentPassport = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      currentUser = AuthService.requireAuth(["student"]);
+      if (!currentUser) return;
+
+      await loadPassportDetails();
+    });
+
+    async function loadPassportDetails() {
+      studentPassport = await DBService.getPassportByStudentId(currentUser.uid);
+      const studentProfile = await DBService.getStudentProfile(currentUser.uid);
+
+      if (!studentPassport) {
+        // Fallback default mock
+        studentPassport = {
+          passportId: "SKP-" + Math.floor(1000 + Math.random() * 9000),
+          studentId: currentUser.uid,
+          studentName: currentUser.name || "Alex Rivera",
+          university: (studentProfile && studentProfile.university) || "Stanford University",
+          course: (studentProfile && studentProfile.course) || "B.S. Computer Science",
+          trustScore: 97,
+          verificationStatus: "Cryptographically Verified",
+          verifiedSkills: [],
+          telemetry: { astUniqueness: 98, replayIntegrity: 99, behavioralTelemetry: 95 }
+        };
+      }
+
+      // Populate Top Banner
+      document.getElementById("pass-student-name").textContent = studentPassport.studentName;
+      document.getElementById("pass-avatar").src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentPassport.studentName)}&background=0152D9&color=fff`;
+      document.getElementById("pass-student-education").textContent = `${studentPassport.university} • ${studentPassport.course}`;
+      document.getElementById("pass-trust-score").textContent = `${studentPassport.trustScore} / 100`;
+      document.getElementById("pass-id-label").textContent = studentPassport.passportId;
+      document.getElementById("qr-passport-id-label").textContent = studentPassport.passportId;
+
+      // SHA-256 seal preview
+      const seal = studentPassport.cryptographicSeal || "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+      document.getElementById("pass-seal-short").textContent = `${seal.substring(0, 16)}...${seal.substring(seal.length - 8)}`;
+
+      // Telemetry
+      const telem = studentPassport.telemetry || { astUniqueness: 98, replayIntegrity: 99, behavioralTelemetry: 95 };
+      document.getElementById("telemetry-ast").textContent = `${telem.astUniqueness}%`;
+      document.getElementById("telemetry-replay").textContent = `${telem.replayIntegrity}%`;
+      document.getElementById("telemetry-behavior").textContent = `${telem.behavioralTelemetry}%`;
+
+      // Verified Skills
+      const skills = studentPassport.verifiedSkills || [];
+      document.getElementById("pass-skills-count").textContent = `${skills.length} Competencies Verified`;
+      renderSkillsMatrix(skills);
+
+      // Render Dynamic SVG QR Code
+      const verifyUrl = `${window.location.origin}/verify.html?id=${studentPassport.passportId}`;
+      document.getElementById("btn-public-verify-link").href = `verify.html?id=${studentPassport.passportId}`;
+      const qrSvg = PassportService.generateQRCodeSVG(verifyUrl, 160);
+      document.getElementById("qr-code-container").innerHTML = qrSvg;
+    }
+
+    function renderSkillsMatrix(skills) {
+      const container = document.getElementById("verified-skills-matrix");
+      if (!container) return;
+
+      if (skills.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full p-6 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+            <span class="material-symbols-outlined text-3xl mb-1 text-slate-400">verified</span>
+            <p class="text-xs">No verified skills minted yet. Complete challenges in Candidate Studio to add credentials.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = skills.map(s => `
+        <div class="p-4 rounded-2xl bg-canvas border border-slate-200 hover:border-brand/40 transition-colors flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-ink">${s.skill}</span>
+              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                s.level === 'Mastery' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                s.level === 'Advanced' ? 'bg-blue-50 text-brand border border-blue-200' :
+                'bg-slate-100 text-slate-700'
+              }">${s.level}</span>
+            </div>
+
+            <div class="flex items-baseline gap-2">
+              <span class="text-2xl font-black font-mono text-ink">${s.score}%</span>
+              <span class="text-[10px] text-slate-400 font-mono">Gauntlet Score</span>
+            </div>
+
+            <p class="text-[11px] text-slate-500 mt-2 line-clamp-1 italic">
+              Via: ${s.challengeTitle || 'Assessment Gauntlet'}
+            </p>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+            <span>Verified: ${s.verifiedAt || '2026-10'}</span>
+            <span class="text-emerald-600 font-bold flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-xs">check_circle</span>
+              <span>SHA-256</span>
+            </span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function copyPublicVerificationLink() {
+      const url = `${window.location.origin}/verify.html?id=${studentPassport.passportId}`;
+      navigator.clipboard.writeText(url);
+      NotificationService.showToast("Link Copied", "Public verification link copied to clipboard.", "success");
+    }
+
+    function openRawProofModal() {
+      const json = PassportService.exportRawProofJSON(studentPassport);
+      document.getElementById("raw-proof-json").textContent = json;
+      document.getElementById("raw-proof-modal").classList.remove("hidden");
+    }
+
+    function closeRawProofModal() {
+      document.getElementById("raw-proof-modal").classList.add("hidden");
+    }
+
+    function copyRawProofJSON() {
+      const json = document.getElementById("raw-proof-json").textContent;
+      navigator.clipboard.writeText(json);
+      NotificationService.showToast("Proof Copied", "Raw cryptographic JSON proof copied.", "success");
+    }
+
+    function openEmbedModal() {
+      const snippet = PassportService.generateEmbedSnippet(studentPassport.passportId);
+      document.getElementById("embed-snippet-text").value = snippet;
+      document.getElementById("embed-modal").classList.remove("hidden");
+    }
+
+    function closeEmbedModal() {
+      document.getElementById("embed-modal").classList.add("hidden");
+    }
+
+    function copyEmbedSnippet() {
+      const text = document.getElementById("embed-snippet-text").value;
+      navigator.clipboard.writeText(text);
+      NotificationService.showToast("Snippet Copied", "Responsive iframe embed code copied.", "success");
+    }
+
+    function handleDownloadPrint() {
+      window.print();
+    }
+  </script>
+</body>
+</html>
