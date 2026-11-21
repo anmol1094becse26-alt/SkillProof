@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillProof — Candidate Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: '#0152D9',
+            brandContainer: '#356DF3',
+            brandSurface: '#EFF4FF',
+            canvas: '#F8F9FF',
+            ink: '#0B1C30',
+            slateMuted: '#434654',
+            emeraldDark: '#006B49',
+            mintLight: '#6FFBBE',
+            terminalBg: '#213145',
+            terminalDark: '#0B1C30'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#F8F9FF] text-[#0B1C30] font-sans min-h-screen flex selection:bg-brand selection:text-white">
+
+  <!-- Left Navigation Rail -->
+  <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex shrink-0">
+    <div>
+      <!-- Platform Brand -->
+      <div class="h-16 px-6 flex items-center gap-2.5 border-b border-slate-100">
+        <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white shadow-sm shadow-brand/30">
+          <span class="material-symbols-outlined text-lg">verified</span>
+        </div>
+        <span class="text-lg font-bold text-ink">Skill<span class="text-brand">Proof</span></span>
+        <span class="text-[10px] font-mono text-brand bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 ml-auto">STUDIO</span>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="p-4 space-y-1.5">
+        <a href="student-dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-blue-50 text-brand border border-blue-100 transition-colors">
+          <span class="material-symbols-outlined text-xl">dashboard</span>
+          <span>Overview</span>
+        </a>
+        <a href="#challenges-section" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slateMuted hover:text-ink hover:bg-slate-50 transition-colors">
+          <span class="material-symbols-outlined text-xl">code</span>
+          <span>Challenge Hub</span>
+        </a>
+        <a href="my-skills-and-passport.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slateMuted hover:text-ink hover:bg-slate-50 transition-colors">
+          <span class="material-symbols-outlined text-xl">badge</span>
+          <span>Skill Passport</span>
+        </a>
+        <button onclick="openJobReadinessModal()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slateMuted hover:text-ink hover:bg-slate-50 transition-colors text-left">
+          <span class="material-symbols-outlined text-xl">work</span>
+          <span>Job Readiness</span>
+        </button>
+        <a href="verify.html" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slateMuted hover:text-ink hover:bg-slate-50 transition-colors">
+          <span class="material-symbols-outlined text-xl">qr_code_scanner</span>
+          <span>Public Verifier</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Candidate Mini Profile & Logout -->
+    <div class="p-4 border-t border-slate-100">
+      <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-50 border border-slate-200/80 mb-3">
+        <img id="nav-avatar" src="" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-slate-300">
+        <div class="flex-1 min-w-0">
+          <p id="nav-student-name" class="text-xs font-bold text-ink truncate">Loading...</p>
+          <p id="nav-student-uni" class="text-[11px] text-slate-400 truncate">Stanford</p>
+        </div>
+      </div>
+      <button onclick="AuthService.signOut()" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all">
+        <span class="material-symbols-outlined text-base">logout</span>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Workspace Area -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    
+    <!-- Top Header -->
+    <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
+      
+      <div class="flex items-center gap-3">
+        <!-- Mobile Nav Trigger -->
+        <a href="index.html" class="md:hidden flex items-center gap-2">
+          <span class="material-symbols-outlined text-brand">verified</span>
+          <span class="font-bold text-ink">SkillProof</span>
+        </a>
+        <h1 class="text-lg font-bold text-ink hidden sm:block">Candidate Studio</h1>
+        <div id="header-passport-badge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-mono font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="header-passport-id">SKP-8492</span>
+          <span>(Verified)</span>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center gap-3">
+        <!-- Job Readiness Gap Trigger -->
+        <button onclick="openJobReadinessModal()" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-brand border border-blue-200 text-xs font-semibold hover:bg-blue-100 transition-colors">
+          <span class="material-symbols-outlined text-sm">analytics</span>
+          <span>Employer Match Engine</span>
+        </button>
+
+        <!-- Edit Profile Trigger -->
+        <button onclick="openEditProfileModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200 transition-colors">
+          <span class="material-symbols-outlined text-sm">edit</span>
+          <span>Edit Profile</span>
+        </button>
+
+        <!-- Notifications Bell -->
+        <div class="relative">
+          <button onclick="toggleNotificationsDrawer()" class="p-2 rounded-xl text-slate-600 hover:text-ink hover:bg-slate-100 transition-colors relative">
+            <span class="material-symbols-outlined text-xl">notifications</span>
+            <span id="notif-badge" class="hidden absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center font-mono">0</span>
+          </button>
+
+          <!-- Notifications Dropdown Drawer -->
+          <div id="notif-drawer" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50">
+            <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <span class="text-xs font-bold text-ink uppercase tracking-wider">Notifications</span>
+              <button onclick="markAllNotificationsRead()" class="text-[11px] text-brand hover:underline font-semibold">Mark all read</button>
+            </div>
+            <div id="notif-drawer-content" class="max-h-80 overflow-y-auto">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </header>
+
+    <!-- Page Body -->
+    <main class="p-4 sm:p-8 space-y-8 max-w-7xl mx-auto w-full">
+      
+      <!-- Welcome Banner -->
+      <div class="bg-gradient-to-r from-brand via-brandContainer to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+        <div class="relative z-10 max-w-2xl">
+          <span class="text-xs font-mono uppercase px-2 py-0.5 rounded bg-white/20 text-white">Cryptographic Assessment Sandbox</span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold mt-2 tracking-tight">
+            Welcome back, <span id="banner-student-name">Alex</span>.
+          </h2>
+          <p class="text-blue-100 text-xs sm:text-sm mt-1.5 leading-relaxed">
+            Every passed test case and conceptual explanation dynamically increases your unforgeable Anti-Cheat Trust Score. Employers hire from proof, not promises.
+          </p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <a href="my-skills-and-passport.html" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-brand rounded-xl text-xs font-bold shadow hover:bg-blue-50 transition-colors">
+              <span class="material-symbols-outlined text-sm">badge</span>
+              <span>View Digital Skill Passport</span>
+            </a>
+            <button onclick="openJobReadinessModal()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs font-semibold transition-colors">
+              <span class="material-symbols-outlined text-sm">analytics</span>
+              <span>Check Job Match %</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Bento Stat Cards -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- Bento 1 -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-brand/40 transition-colors">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider">Challenges Completed</span>
+            <span class="material-symbols-outlined text-xl text-brand">terminal</span>
+          </div>
+          <div class="text-3xl font-extrabold font-mono text-ink" id="stat-challenges-completed">2</div>
+          <p class="text-[11px] text-slateMuted mt-1">Evaluated across automated suites</p>
+        </div>
+
+        <!-- Bento 2 -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-brand/40 transition-colors">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider">Avg. Challenge Score</span>
+            <span class="material-symbols-outlined text-xl text-emeraldDark">speed</span>
+          </div>
+          <div class="text-3xl font-extrabold font-mono text-emerald-700" id="stat-avg-score">96.5%</div>
+          <p class="text-[11px] text-slateMuted mt-1">Visible, edge & perf assertions</p>
+        </div>
+
+        <!-- Bento 3 -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-brand/40 transition-colors">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider">Verified Skills</span>
+            <span class="material-symbols-outlined text-xl text-indigo-600">verified</span>
+          </div>
+          <div class="text-3xl font-extrabold font-mono text-ink" id="stat-verified-skills-count">5</div>
+          <p class="text-[11px] text-slateMuted mt-1">Bound to SHA-256 seal</p>
+        </div>
+
+        <!-- Bento 4 -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-brand/40 transition-colors">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider">Anti-Cheat Trust Score</span>
+            <span class="material-symbols-outlined text-xl text-emeraldDark">security</span>
+          </div>
+          <div class="text-3xl font-extrabold font-mono text-emerald-700" id="stat-trust-score">97 / 100</div>
+          <p class="text-[11px] text-slateMuted mt-1">AST Uniqueness: 98% (Mastery)</p>
+        </div>
+
+      </section>
+
+      <!-- Curated Challenges Section -->
+      <section id="challenges-section" class="space-y-4">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-ink">Curated Verification Challenges</h3>
+            <p class="text-xs text-slateMuted">Solve live challenges inside the IDE sandbox to mint new verified competencies.</p>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+            <button onclick="filterChallenges('All')" class="category-pill active px-3 py-1.5 rounded-lg bg-white text-brand shadow-sm transition-all" data-cat="All">All</button>
+            <button onclick="filterChallenges('Algorithms')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="Algorithms">Algorithms</button>
+            <button onclick="filterChallenges('System Design')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="System Design">System Design</button>
+            <button onclick="filterChallenges('Security')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="Security">Security</button>
+          </div>
+        </div>
+
+        <!-- Challenges Grid -->
+        <div id="challenges-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Dynamically populated from Firestore/Local -->
+        </div>
+
+      </section>
+
+      <!-- Recent Submissions Table -->
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold text-ink">Recent Verification Submissions</h3>
+            <p class="text-xs text-slateMuted">Immutable audit trail of your code execution, unit assertion scores, and telemetry status.</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 uppercase tracking-wider font-mono border-b border-slate-200">
+                <th class="py-3 px-5">Challenge</th>
+                <th class="py-3 px-4">Language</th>
+                <th class="py-3 px-4">Evaluation Score</th>
+                <th class="py-3 px-4">Plagiarism AST</th>
+                <th class="py-3 px-4">Verification Status</th>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="submissions-tbody" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div id="edit-profile-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-base font-bold text-ink flex items-center gap-2">
+          <span class="material-symbols-outlined text-brand">account_circle</span>
+          <span>Edit Candidate Profile</span>
+        </h3>
+        <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+
+      <form id="edit-profile-form" onsubmit="handleSaveProfile(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+          <input type="text" id="prof-name" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">University / Institution</label>
+          <input type="text" id="prof-university" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Major / Degree</label>
+            <input type="text" id="prof-course" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Department</label>
+            <input type="text" id="prof-department" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Bio / Architectural Focus</label>
+          <textarea id="prof-bio" rows="3" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Claimed Skills (Comma-separated)</label>
+          <input type="text" id="prof-skills" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="Algorithms, System Design, JavaScript">
+          <p class="text-[11px] text-slate-400 mt-1">Note: Claimed skills only become "Verified" once you pass challenge gauntlets.</p>
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+          <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-brand hover:bg-blue-700 rounded-xl shadow-sm">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Job Readiness & Match Gap Modal -->
+  <div id="job-readiness-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div>
+          <h3 class="text-base font-bold text-ink flex items-center gap-2">
+            <span class="material-symbols-outlined text-brand">analytics</span>
+            <span>Live Job Readiness & Match Engine</span>
+          </h3>
+          <p class="text-xs text-slateMuted">Exact mathematical comparison between your verified skills and active enterprise openings.</p>
+        </div>
+        <button onclick="closeJobReadinessModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6" id="job-readiness-content">
+        <!-- Dynamically populated with job matches -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/seed-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script src="js/db-service.js"></script>
+  <script src="js/passport-service.js"></script>
+  <script src="js/job-matching.js"></script>
+  <script src="js/notification-service.js"></script>
+
+  <script>
+    let currentUser = null;
+    let studentProfile = null;
+    let studentPassport = null;
+    let allChallenges = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Role Guard
+      currentUser = AuthService.requireAuth(["student"]);
+      if (!currentUser) return;
+
+      await loadDashboardData();
+      NotificationService.updateBadgeUI(currentUser.uid);
+    });
+
+    async function loadDashboardData() {
+      // 1. Load Profile
+      studentProfile = await DBService.getStudentProfile(currentUser.uid);
+      studentPassport = await DBService.getPassportByStudentId(currentUser.uid);
+
+      // Populate Navigation & Banner
+      const name = currentUser.name || "Candidate";
+      document.getElementById("nav-student-name").textContent = name;
+      document.getElementById("banner-student-name").textContent = name.split(" ")[0];
+      document.getElementById("nav-avatar").src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0152D9&color=fff`;
+
+      if (studentProfile && studentProfile.university) {
+        document.getElementById("nav-student-uni").textContent = studentProfile.university;
+      }
+
+      if (studentPassport) {
+        document.getElementById("header-passport-id").textContent = studentPassport.passportId;
+        document.getElementById("header-passport-badge").classList.remove("hidden");
+        document.getElementById("stat-trust-score").textContent = `${studentPassport.trustScore} / 100`;
+        document.getElementById("stat-verified-skills-count").textContent = (studentPassport.verifiedSkills || []).length;
+      }
+
+      // 2. Load Challenges
+      allChallenges = await DBService.getChallenges();
+      renderChallenges(allChallenges);
+
+      // 3. Load Submissions
+      const submissions = await DBService.getSubmissions(currentUser.uid);
+      document.getElementById("stat-challenges-completed").textContent = submissions.length;
+
+      // Compute average evaluation score
+      const evaluations = await DBService.getEvaluations(currentUser.uid);
+      if (evaluations.length > 0) {
+        const avg = Math.round(evaluations.reduce((acc, e) => acc + (e.totalScore || 0), 0) / evaluations.length);
+        document.getElementById("stat-avg-score").textContent = `${avg}%`;
+      } else {
+        document.getElementById("stat-avg-score").textContent = "N/A";
+      }
+
+      renderSubmissionsTable(submissions, evaluations);
+    }
+
+    function renderChallenges(challenges) {
+      const container = document.getElementById("challenges-grid");
+      if (!container) return;
+
+      container.innerHTML = challenges.map(c => `
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-brand/40 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded font-semibold ${
+                c.category === 'Algorithms' ? 'bg-blue-50 text-brand' :
+                c.category === 'System Design' ? 'bg-indigo-50 text-indigo-700' :
+                'bg-emerald-50 text-emerald-800'
+              }">${c.category}</span>
+              
+              <span class="text-xs font-semibold px-2 py-0.5 rounded ${
+                c.difficulty === 'Easy' ? 'bg-slate-100 text-slate-700' :
+                c.difficulty === 'Medium' ? 'bg-amber-50 text-amber-800' :
+                'bg-rose-50 text-rose-800'
+              }">${c.difficulty}</span>
+            </div>
+
+            <h4 class="text-base font-bold text-ink leading-snug">${c.title}</h4>
+            <p class="text-xs text-slateMuted mt-2 line-clamp-2 leading-relaxed">${c.description.replace(/[*#`]/g, '')}</p>
+
+            <div class="mt-4 flex flex-wrap gap-1.5">
+              ${(c.requiredSkills || []).map(s => `
+                <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-mono">${s}</span>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-mono flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">timer</span>
+              <span>${c.durationMinutes}m</span>
+            </span>
+            <a href="challenge-workspace.html?id=${c.challengeId}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-brand hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors">
+              <span>Start Challenge</span>
+              <span class="material-symbols-outlined text-xs">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterChallenges(category) {
+      document.querySelectorAll(".category-pill").forEach(p => {
+        if (p.getAttribute("data-cat") === category) {
+          p.className = "category-pill active px-3 py-1.5 rounded-lg bg-white text-brand shadow-sm transition-all";
+        } else {
+          p.className = "category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all";
+        }
+      });
+
+      if (category === "All") {
+        renderChallenges(allChallenges);
+      } else {
+        renderChallenges(allChallenges.filter(c => c.category === category));
+      }
+    }
+
+    function renderSubmissionsTable(submissions, evaluations) {
+      const tbody = document.getElementById("submissions-tbody");
+      if (!tbody) return;
+
+      if (submissions.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-400">
+              No submissions recorded yet. Take your first challenge above to earn cryptographic verification.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const evalMap = {};
+      evaluations.forEach(e => evalMap[e.evaluationId] = e);
+
+      tbody.innerHTML = submissions.map(s => {
+        const ev = evalMap[s.evaluationId] || {};
+        const challenge = allChallenges.find(c => c.challengeId === s.challengeId) || { title: s.challengeId };
+        const dateStr = s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : "Recent";
+        const score = ev.totalScore !== undefined ? `${ev.totalScore}%` : "Pending";
+        const astSim = ev.similarityScore !== undefined ? `${100 - ev.similarityScore}% Unique` : "Clean";
+        const status = ev.verificationStatus || "Approved";
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="py-3 px-5 font-semibold text-ink">${challenge.title}</td>
+            <td class="py-3 px-4 font-mono text-slate-500 uppercase">${s.language || 'JS'}</td>
+            <td class="py-3 px-4 font-mono font-bold ${ev.totalScore >= 90 ? 'text-emerald-600' : 'text-blue-600'}">${score}</td>
+            <td class="py-3 px-4 font-mono text-slate-600">${astSim}</td>
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                status === 'Approved' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+              }">
+                <span class="w-1.5 h-1.5 rounded-full ${status === 'Approved' ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+                <span>${status}</span>
+              </span>
+            </td>
+            <td class="py-3 px-4 text-slate-400 font-mono">${dateStr}</td>
+            <td class="py-3 px-4 text-right">
+              <a href="challenge-workspace.html?id=${s.challengeId}" class="text-brand hover:underline font-semibold">Review Code</a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Edit Profile Modal
+    function openEditProfileModal() {
+      if (studentProfile) {
+        document.getElementById("prof-name").value = currentUser.name || "";
+        document.getElementById("prof-university").value = studentProfile.university || "";
+        document.getElementById("prof-course").value = studentProfile.course || "";
+        document.getElementById("prof-department").value = studentProfile.department || "";
+        document.getElementById("prof-bio").value = studentProfile.bio || "";
+        document.getElementById("prof-skills").value = (studentProfile.skills || []).join(", ");
+      }
+      document.getElementById("edit-profile-modal").classList.remove("hidden");
+    }
+
+    function closeEditProfileModal() {
+      document.getElementById("edit-profile-modal").classList.add("hidden");
+    }
+
+    async function handleSaveProfile(e) {
+      e.preventDefault();
+      const name = document.getElementById("prof-name").value.trim();
+      const university = document.getElementById("prof-university").value.trim();
+      const course = document.getElementById("prof-course").value.trim();
+      const department = document.getElementById("prof-department").value.trim();
+      const bio = document.getElementById("prof-bio").value.trim();
+      const skills = document.getElementById("prof-skills").value.split(",").map(s => s.trim()).filter(Boolean);
+
+      await DBService.updateStudentProfile(currentUser.uid, {
+        name,
+        university,
+        course,
+        department,
+        bio,
+        skills
+      });
+
+      currentUser.name = name;
+      AuthService.setCurrentUser(currentUser);
+      closeEditProfileModal();
+      NotificationService.showToast("Profile Updated", "Your candidate profile changes have been persisted.", "success");
+      await loadDashboardData();
+    }
+
+    // Job Readiness Modal
+    async function openJobReadinessModal() {
+      const modal = document.getElementById("job-readiness-modal");
+      const content = document.getElementById("job-readiness-content");
+      modal.classList.remove("hidden");
+      content.innerHTML = `<p class="text-xs text-slate-500">Calculating algorithmic job match percentages...</p>`;
+
+      const jobs = await DBService.getJobs();
+      const matches = JobMatchingEngine.matchCandidateAcrossJobs(studentPassport, jobs);
+
+      content.innerHTML = matches.map(m => {
+        const res = m.matchResult;
+        return `
+          <div class="p-5 rounded-2xl bg-canvas border border-slate-200">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="text-xs font-mono uppercase text-brand font-semibold">${m.job.companyName}</span>
+                <h4 class="text-base font-bold text-ink mt-0.5">${m.job.title}</h4>
+                <p class="text-xs text-slateMuted mt-1">${m.job.location} • ${m.job.employmentType}</p>
+              </div>
+              <div class="text-right">
+                <span class="text-2xl font-black font-mono ${res.overallMatch >= 85 ? 'text-emerald-600' : res.overallMatch >= 65 ? 'text-blue-600' : 'text-slate-500'}">${res.overallMatch}%</span>
+                <span class="block text-[10px] text-slate-400 uppercase font-mono">Verified Match</span>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden">
+              <div class="h-full bg-brand rounded-full transition-all duration-500" style="width: ${res.overallMatch}%"></div>
+            </div>
+
+            <!-- Breakdown -->
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div class="p-3 bg-white rounded-xl border border-slate-200">
+                <p class="font-semibold text-emerald-800 flex items-center gap-1 mb-1.5">
+                  <span class="material-symbols-outlined text-sm">check_circle</span>
+                  <span>Meeting Skills (${res.meetingSkills.length})</span>
+                </p>
+                ${res.meetingSkills.length > 0 ? `
+                  <ul class="space-y-1 text-slate-600">
+                    ${res.meetingSkills.map(s => `<li>• <strong>${s.skill}</strong>: verified ${s.candidateScore}% (min ${s.requiredScore}%)</li>`).join('')}
+                  </ul>
+                ` : `<p class="text-slate-400 italic">None yet verified.</p>`}
+              </div>
+
+              <div class="p-3 bg-white rounded-xl border border-slate-200">
+                <p class="font-semibold text-rose-800 flex items-center gap-1 mb-1.5">
+                  <span class="material-symbols-outlined text-sm">cancel</span>
+                  <span>Missing / Unverified (${res.missingSkills.length})</span>
+                </p>
+                ${res.missingSkills.length > 0 ? `
+                  <ul class="space-y-1 text-slate-600">
+                    ${res.missingSkills.map(s => `<li>• <strong>${s.skill}</strong>: unverified (min ${s.requiredScore}%)</li>`).join('')}
+                  </ul>
+                ` : `<p class="text-emerald-600 font-medium">All required skills verified!</p>`}
+              </div>
+            </div>
+
+            <!-- Actionable Recommendations -->
+            ${res.recommendations.length > 0 ? `
+              <div class="mt-3 p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-xs text-brand">
+                <p class="font-semibold mb-1">Recommended Next Actions:</p>
+                <ul class="list-disc list-inside space-y-0.5 text-slate-700">
+                  ${res.recommendations.map(r => `<li>${r}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function closeJobReadinessModal() {
+      document.getElementById("job-readiness-modal").classList.add("hidden");
+    }
+
+    // Notifications Drawer
+    let drawerOpen = false;
+    function toggleNotificationsDrawer() {
+      drawerOpen = !drawerOpen;
+      const drawer = document.getElementById("notif-drawer");
+      if (drawerOpen) {
+        drawer.classList.remove("hidden");
+        NotificationService.renderNotificationDrawer(currentUser.uid, "notif-drawer-content");
+      } else {
+        drawer.classList.add("hidden");
+      }
+    }
+
+    async function markAllNotificationsRead() {
+      await DBService.markAllNotificationsRead(currentUser.uid);
+      NotificationService.updateBadgeUI(currentUser.uid);
+      NotificationService.renderNotificationDrawer(currentUser.uid, "notif-drawer-content");
+    }
+  </script>
+</body>
+</html>

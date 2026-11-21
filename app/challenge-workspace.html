@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillProof — Live Assessment IDE & Verification Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: '#0152D9',
+            brandContainer: '#356DF3',
+            brandSurface: '#EFF4FF',
+            canvas: '#F8F9FF',
+            ink: '#0B1C30',
+            slateMuted: '#434654',
+            emeraldDark: '#006B49',
+            mintLight: '#6FFBBE',
+            terminalBg: '#1e293b',
+            terminalDark: '#0f172a'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .editor-line-numbers {
+      counter-reset: line;
+    }
+    .editor-line-numbers span {
+      counter-increment: line;
+      display: block;
+    }
+    .editor-line-numbers span::before {
+      content: counter(line);
+      display: inline-block;
+      width: 2rem;
+      padding-right: 0.75rem;
+      color: #64748b;
+      text-align: right;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-[#F8F9FF] text-[#0B1C30] font-sans h-screen flex flex-col overflow-hidden selection:bg-brand selection:text-white">
+
+  <!-- Top Workspace Bar -->
+  <header class="h-14 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
+    <div class="flex items-center gap-3">
+      <a href="student-dashboard.html" class="p-1.5 rounded-lg text-slate-500 hover:text-ink hover:bg-slate-100 transition-colors flex items-center" title="Return to Dashboard">
+        <span class="material-symbols-outlined text-xl">arrow_back</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <h1 id="workspace-challenge-title" class="text-sm font-bold text-ink">Optimal Two-Sum & Hash Indexing</h1>
+        <span id="workspace-difficulty-badge" class="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-blue-50 text-brand border border-blue-200">Easy</span>
+      </div>
+    </div>
+
+    <!-- Timer & Controls -->
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-100 font-mono text-xs font-bold text-slate-700 border border-slate-200">
+        <span class="material-symbols-outlined text-sm text-slate-500">timer</span>
+        <span id="countdown-timer">25:00</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="runCodeTests()" id="run-btn" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold shadow-sm transition-all">
+          <span class="material-symbols-outlined text-sm text-emerald-400">play_arrow</span>
+          <span>Run Tests</span>
+        </button>
+
+        <button onclick="openVerificationModal()" id="submit-verify-btn" class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-brand hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand/20 transition-all">
+          <span class="material-symbols-outlined text-sm">verified</span>
+          <span>Submit & Verify</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Split Screen Workspace Area -->
+  <div class="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+    
+    <!-- LEFT PANEL: Challenge Specs & Rules -->
+    <div class="w-full md:w-5/12 bg-white border-r border-slate-200 flex flex-col min-h-0">
+      
+      <!-- Specs Tabs -->
+      <div class="flex items-center border-b border-slate-200 px-4 bg-slate-50/70 text-xs font-semibold">
+        <button onclick="setSpecTab('desc')" id="tab-btn-desc" class="py-3 px-4 text-brand border-b-2 border-brand transition-colors flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">description</span>
+          <span>Description</span>
+        </button>
+        <button onclick="setSpecTab('cases')" id="tab-btn-cases" class="py-3 px-4 text-slate-500 hover:text-ink transition-colors flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">checklist</span>
+          <span>Public Cases</span>
+        </button>
+        <button onclick="setSpecTab('integrity')" id="tab-btn-integrity" class="py-3 px-4 text-slate-500 hover:text-ink transition-colors flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">security</span>
+          <span>Integrity Rules</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="flex-1 p-6 overflow-y-auto space-y-4 text-xs leading-relaxed text-slate-700">
+        
+        <!-- Description Tab -->
+        <div id="spec-desc-content" class="space-y-4">
+          <div class="prose prose-sm text-xs" id="challenge-desc-body">
+            <!-- Populated dynamically -->
+          </div>
+
+          <div class="p-4 bg-blue-50/70 rounded-xl border border-blue-200/60 text-brand">
+            <p class="font-bold mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm">lightbulb</span>
+              <span>Verification Objective:</span>
+            </p>
+            <p class="text-[11px] text-slate-700 leading-normal" id="challenge-skills-summary">
+              Demonstrate algorithmic mastery in time and space complexity with strict unit assertion coverage.
+            </p>
+          </div>
+        </div>
+
+        <!-- Public Cases Tab -->
+        <div id="spec-cases-content" class="space-y-3 hidden">
+          <p class="text-xs text-slateMuted">These visible test cases are executed automatically when you click "Run Tests".</p>
+          <div id="public-cases-list" class="space-y-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Integrity Rules Tab -->
+        <div id="spec-integrity-content" class="space-y-4 hidden">
+          <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-amber-900">
+            <h4 class="font-bold flex items-center gap-1.5 text-xs text-amber-950">
+              <span class="material-symbols-outlined text-base text-amber-600">gavel</span>
+              <span>Cryptographic Integrity Protocol</span>
+            </h4>
+            <p class="text-[11px] mt-1.5 leading-relaxed text-amber-900">
+              SkillProof utilizes AST structure tokenization, Jaccard n-gram distance analysis, and execution timing telemetry to verify that code is original and conceived in real-time.
+            </p>
+          </div>
+
+          <div class="space-y-2 text-[11px]">
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-brand text-sm mt-0.5">timer_off</span>
+              <div>
+                <strong class="text-ink">2,500ms Timeout Race:</strong>
+                <span class="text-slateMuted"> Infinite loops or runaway algorithms are abruptly terminated.</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-brand text-sm mt-0.5">fingerprint</span>
+              <div>
+                <strong class="text-ink">Plagiarism AST Boundary:</strong>
+                <span class="text-slateMuted"> Token similarity over 85% flags submission as "Under Review".</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-brand text-sm mt-0.5">psychology</span>
+              <div>
+                <strong class="text-ink">Follow-Up Conceptual Defense:</strong>
+                <span class="text-slateMuted"> Final submission requires justification of algorithmic complexity tradeoffs.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: Dark Code Editor & Interactive Test Runner -->
+    <div class="w-full md:w-7/12 bg-terminalDark flex flex-col min-h-0">
+      
+      <!-- Editor Header Toolbar -->
+      <div class="h-10 bg-[#162032] border-b border-slate-700/60 px-4 flex items-center justify-between text-xs text-slate-300">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm text-yellow-400">javascript</span>
+          <span class="font-mono text-[11px] text-slate-200">solution.js</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="resetStarterCode()" class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1 transition-colors">
+            <span class="material-symbols-outlined text-xs">restart_alt</span>
+            <span>Reset Code</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Editor Code Input Box -->
+      <div class="flex-1 relative flex overflow-hidden">
+        <textarea 
+          id="code-editor" 
+          spellcheck="false" 
+          class="w-full h-full p-4 bg-terminalDark text-emerald-300 font-mono text-xs sm:text-sm leading-relaxed resize-none focus:outline-none selection:bg-blue-600 selection:text-white"
+        ></textarea>
+      </div>
+
+      <!-- Bottom Test Runner Output Console -->
+      <div class="h-56 bg-terminalBg border-t border-slate-700/80 flex flex-col min-h-0">
+        <div class="h-9 bg-[#162032] px-4 flex items-center justify-between border-b border-slate-700/60 text-xs">
+          <div class="flex items-center gap-2 font-mono">
+            <span class="material-symbols-outlined text-sm text-slate-400">terminal</span>
+            <span class="font-bold text-slate-200">Test Execution Console</span>
+          </div>
+          <div id="test-summary-pill" class="text-[11px] font-mono text-slate-400">
+            Click "Run Tests" to execute unit assertions.
+          </div>
+        </div>
+
+        <div id="test-results-container" class="flex-1 p-3.5 overflow-y-auto font-mono text-xs text-slate-200 space-y-2">
+          <div class="text-slate-400 italic text-[11px]">
+            &gt; Ready. Your solution will be tested against visible, edge, and performance unit cases in an isolated sandbox.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Follow-Up Verification & Conceptual Justification Modal -->
+  <div id="verification-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+      
+      <div class="p-5 bg-gradient-to-r from-brand to-indigo-700 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-2xl">verified_user</span>
+          <div>
+            <h3 class="text-base font-bold">Follow-Up Conceptual Defense</h3>
+            <p class="text-xs text-blue-100">Anti-Cheat verification step: justify your algorithm and invariants.</p>
+          </div>
+        </div>
+        <button onclick="closeVerificationModal()" class="text-white/80 hover:text-white">✕</button>
+      </div>
+
+      <form id="verification-form" onsubmit="handleFinalSubmission(event)" class="p-6 overflow-y-auto space-y-5 text-xs">
+        
+        <div>
+          <label class="block font-bold text-ink mb-1">1. Technical Approach & Complexity Justification</label>
+          <p class="text-slateMuted mb-2">Explain how your algorithm achieves its time and space bounds (e.g. mention $O(n)$, auxiliary hash map, or pointers).</p>
+          <textarea id="val-explanation" required rows="3" class="w-full p-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="e.g. Implemented a single-pass hash map to store previously seen numbers with their indices, ensuring O(n) runtime and O(n) memory..."></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold text-ink mb-1">2. Invariant & Edge-Case Defense</label>
+          <p class="text-slateMuted mb-2">How does your implementation handle extreme boundary conditions, duplicate entries, or memory limits?</p>
+          <textarea id="val-edge-case" required rows="3" class="w-full p-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" placeholder="e.g. Boundary cases such as empty arrays or duplicate elements are cleanly intercepted without throwing null pointer exceptions..."></textarea>
+        </div>
+
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-3 text-slate-600">
+          <span class="material-symbols-outlined text-brand text-lg mt-0.5">fingerprint</span>
+          <div>
+            <span class="font-bold text-ink">Final Cryptographic Seal Notice:</span>
+            <p class="mt-0.5 leading-relaxed">
+              Upon submitting, your code, test results, explanation, and AST telemetry will be evaluated, a permanent SHA-256 seal will be minted, and your Digital Skill Passport will be updated.
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
+          <button type="button" onclick="closeVerificationModal()" class="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+          <button type="submit" id="final-submit-btn" class="px-5 py-2.5 font-bold text-white bg-brand hover:bg-blue-700 rounded-xl shadow-md shadow-brand/20 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">lock</span>
+            <span>Mint Verification Seal & Submit</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/seed-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script src="js/db-service.js"></script>
+  <script src="js/evaluation-engine.js"></script>
+  <script src="js/trust-score.js"></script>
+  <script src="js/passport-service.js"></script>
+  <script src="js/notification-service.js"></script>
+
+  <script>
+    let currentUser = null;
+    let currentChallenge = null;
+    let timerSeconds = 25 * 60;
+    let timerInterval = null;
+    let latestEvaluation = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      currentUser = AuthService.requireAuth(["student"]);
+      if (!currentUser) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const challengeId = params.get("id") || "chl_two_sum";
+
+      currentChallenge = await DBService.getChallengeById(challengeId);
+      if (!currentChallenge) {
+        alert("Challenge not found! Redirecting to dashboard...");
+        window.location.href = "student-dashboard.html";
+        return;
+      }
+
+      setupWorkspaceUI();
+      startCountdownTimer();
+    });
+
+    function setupWorkspaceUI() {
+      document.getElementById("workspace-challenge-title").textContent = currentChallenge.title;
+      document.getElementById("workspace-difficulty-badge").textContent = currentChallenge.difficulty;
+      
+      // Populate Description
+      const descHtml = currentChallenge.description
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code class="bg-slate-100 text-brand px-1 py-0.5 rounded font-mono text-[11px]">$1</code>');
+      document.getElementById("challenge-desc-body").innerHTML = descHtml;
+
+      document.getElementById("challenge-skills-summary").textContent = 
+        `Required Competencies: ${(currentChallenge.requiredSkills || []).join(", ")}. Must satisfy strict Big-O time and space bounds.`;
+
+      // Populate Public Cases
+      const casesContainer = document.getElementById("public-cases-list");
+      const publicCases = (currentChallenge.testCases || []).filter(tc => tc.type === "visible");
+      casesContainer.innerHTML = publicCases.map((tc, idx) => `
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <p class="font-bold text-ink mb-1">Case ${idx + 1}: ${tc.name}</p>
+          <div class="space-y-1 font-mono text-[11px]">
+            <p class="text-slate-500">Input: <span class="text-slate-800">${tc.input}</span></p>
+            <p class="text-slate-500">Expected: <span class="text-emerald-700 font-semibold">${tc.expected}</span></p>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1 italic">${tc.explanation}</p>
+        </div>
+      `).join('');
+
+      // Populate Editor
+      const starter = (currentChallenge.starterCode && currentChallenge.starterCode.javascript) || "// Write your solution here\n";
+      document.getElementById("code-editor").value = starter;
+
+      // Set timer based on duration
+      timerSeconds = (currentChallenge.durationMinutes || 25) * 60;
+    }
+
+    function resetStarterCode() {
+      if (confirm("Reset editor back to original starter template?")) {
+        const starter = (currentChallenge.starterCode && currentChallenge.starterCode.javascript) || "";
+        document.getElementById("code-editor").value = starter;
+      }
+    }
+
+    function setSpecTab(tab) {
+      const tabs = ["desc", "cases", "integrity"];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`spec-${t}-content`);
+        if (t === tab) {
+          btn.className = "py-3 px-4 text-brand border-b-2 border-brand transition-colors flex items-center gap-1.5 font-bold";
+          content.classList.remove("hidden");
+        } else {
+          btn.className = "py-3 px-4 text-slate-500 hover:text-ink transition-colors flex items-center gap-1.5";
+          content.classList.add("hidden");
+        }
+      });
+    }
+
+    function startCountdownTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      const timerEl = document.getElementById("countdown-timer");
+
+      timerInterval = setInterval(() => {
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          timerEl.textContent = "00:00 (Time Limit)";
+          timerEl.classList.add("text-rose-600");
+          return;
+        }
+        timerSeconds--;
+        const m = Math.floor(timerSeconds / 60);
+        const s = timerSeconds % 60;
+        timerEl.textContent = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+      }, 1000);
+    }
+
+    // Code execution test runner
+    async function runCodeTests() {
+      const runBtn = document.getElementById("run-btn");
+      const summaryPill = document.getElementById("test-summary-pill");
+      const consoleBox = document.getElementById("test-results-container");
+
+      runBtn.disabled = true;
+      runBtn.classList.add("opacity-60");
+      summaryPill.textContent = "Executing sandboxed test suite...";
+
+      const code = document.getElementById("code-editor").value;
+      const existingSubs = await DBService.getSubmissions();
+
+      consoleBox.innerHTML = `<div class="text-blue-400 font-mono text-[11px]">&gt; Spawning safe execution worker... testing ${currentChallenge.testCases.length} unit assertions.</div>`;
+
+      // Run Evaluation
+      latestEvaluation = await EvaluationEngine.evaluateSubmission(code, currentChallenge, existingSubs);
+
+      // Render Console Output
+      let html = `<div class="space-y-2">`;
+      latestEvaluation.testResults.forEach(r => {
+        html += `
+          <div class="p-2.5 rounded-lg ${r.passed ? 'bg-emerald-950/40 border border-emerald-800/40' : 'bg-rose-950/40 border border-rose-800/40'}">
+            <div class="flex items-center justify-between">
+              <span class="font-bold ${r.passed ? 'text-emerald-400' : 'text-rose-400'} flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">${r.passed ? 'check_circle' : 'cancel'}</span>
+                <span>[${r.type.toUpperCase()}] ${r.name}</span>
+              </span>
+              <span class="text-slate-400 text-[10px] font-mono">${r.durationMs}ms</span>
+            </div>
+            <div class="mt-1 text-[11px] text-slate-300">
+              <span>Input: <code>${r.input}</code></span> | 
+              <span>Expected: <code class="text-emerald-300">${r.expected}</code></span> | 
+              <span>Actual: <code class="${r.passed ? 'text-emerald-300' : 'text-rose-300 font-bold'}">${r.actual}</code></span>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+      consoleBox.innerHTML = html;
+
+      summaryPill.innerHTML = `
+        <span class="${latestEvaluation.passedTests === latestEvaluation.totalTests ? 'text-emerald-400 font-bold' : 'text-amber-400'}">
+          ${latestEvaluation.passedTests} / ${latestEvaluation.totalTests} Assertions Passed
+        </span>
+      `;
+
+      runBtn.disabled = false;
+      runBtn.classList.remove("opacity-60");
+
+      NotificationService.showToast(
+        "Tests Executed", 
+        `${latestEvaluation.passedTests} of ${latestEvaluation.totalTests} passed in isolated sandbox.`, 
+        latestEvaluation.passedTests === latestEvaluation.totalTests ? "success" : "warning"
+      );
+    }
+
+    // Modal controls
+    function openVerificationModal() {
+      if (!latestEvaluation) {
+        alert("Please run your code tests before submitting for cryptographic verification.");
+        return;
+      }
+      document.getElementById("verification-modal").classList.remove("hidden");
+    }
+
+    function closeVerificationModal() {
+      document.getElementById("verification-modal").classList.add("hidden");
+    }
+
+    // Final Submission Handler
+    async function handleFinalSubmission(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById("final-submit-btn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Computing SHA-256 Seal...";
+
+      const code = document.getElementById("code-editor").value;
+      const explanation = document.getElementById("val-explanation").value.trim();
+      const edgeCaseAnswer = document.getElementById("val-edge-case").value.trim();
+
+      // 1. Get past scores for consistency
+      const pastEvals = await DBService.getEvaluations(currentUser.uid);
+      const pastScores = pastEvals.map(ev => ev.totalScore || 85);
+
+      // 2. Compute Trust Score
+      const trustBreakdown = TrustScoreEngine.computeTrustScore({
+        S_perf: latestEvaluation.S_perf || 90,
+        explanationText: explanation,
+        followUpAnswers: {
+          edgeCaseDefense: edgeCaseAnswer
+        },
+        pastScores: pastScores,
+        similarityScore: latestEvaluation.similarityScore || 0
+      });
+
+      // 3. Create Submission record
+      const subId = "sub_" + Date.now();
+      const evalId = "eval_" + Date.now();
+
+      const newSubmission = await DBService.createSubmission({
+        submissionId: subId,
+        studentId: currentUser.uid,
+        challengeId: currentChallenge.challengeId,
+        language: "javascript",
+        code: code,
+        explanation: explanation,
+        followUpAnswers: {
+          edgeCaseDefense: edgeCaseAnswer
+        },
+        submittedAt: new Date().toISOString(),
+        status: "evaluated",
+        evaluationId: evalId
+      });
+
+      // 4. Create Evaluation record
+      const newEvaluation = await DBService.createEvaluation({
+        evaluationId: evalId,
+        submissionId: subId,
+        studentId: currentUser.uid,
+        challengeId: currentChallenge.challengeId,
+        totalScore: trustBreakdown.trustScore,
+        skillScores: latestEvaluation.skillScores,
+        passedTests: latestEvaluation.passedTests,
+        totalTests: latestEvaluation.totalTests,
+        testResults: latestEvaluation.testResults,
+        feedback: latestEvaluation.feedback,
+        areasForImprovement: latestEvaluation.areasForImprovement,
+        explanationScore: trustBreakdown.components.S_explain,
+        followUpScore: trustBreakdown.components.S_followup,
+        similarityScore: latestEvaluation.similarityScore,
+        verificationStatus: trustBreakdown.flaggedUnderReview ? "Under Review" : "Approved",
+        evaluatedAt: new Date().toISOString()
+      });
+
+      // 5. Update or Mint Skill Passport
+      let passport = await DBService.getPassportByStudentId(currentUser.uid);
+      const studentProfile = await DBService.getStudentProfile(currentUser.uid);
+
+      if (!passport) {
+        passport = {
+          passportId: "SKP-" + Math.floor(1000 + Math.random() * 9000),
+          studentId: currentUser.uid,
+          studentName: currentUser.name,
+          university: (studentProfile && studentProfile.university) || "Stanford University",
+          course: (studentProfile && studentProfile.course) || "Computer Science",
+          assessmentCount: 0,
+          verifiedSkills: [],
+          issuedAt: new Date().toISOString()
+        };
+      }
+
+      // Merge verified skills
+      const verifiedList = passport.verifiedSkills ? [...passport.verifiedSkills] : [];
+      (currentChallenge.requiredSkills || []).forEach(sk => {
+        const score = latestEvaluation.skillScores[sk] || trustBreakdown.trustScore;
+        const level = PassportService.getMasteryLevel(score);
+        const existingIdx = verifiedList.findIndex(v => v.skill.toLowerCase() === sk.toLowerCase());
+        const entry = {
+          skill: sk,
+          score: score,
+          level: level,
+          verifiedAt: new Date().toISOString().split("T")[0],
+          challengeTitle: currentChallenge.title
+        };
+        if (existingIdx >= 0) {
+          verifiedList[existingIdx] = entry;
+        } else {
+          verifiedList.push(entry);
+        }
+      });
+
+      passport.verifiedSkills = verifiedList;
+      passport.assessmentCount = (passport.assessmentCount || 0) + 1;
+      passport.trustScore = trustBreakdown.trustScore;
+      passport.verificationStatus = trustBreakdown.flaggedUnderReview ? "Under Review" : "Cryptographically Verified";
+      passport.telemetry = trustBreakdown.telemetry;
+      passport.updatedAt = new Date().toISOString();
+
+      // Mint SHA-256 Seal
+      passport.cryptographicSeal = await PassportService.generatePassportSeal(passport);
+      passport.publicVerificationUrl = `verify.html?id=${passport.passportId}`;
+
+      await DBService.savePassport(passport);
+
+      // 6. Dispatch Notification
+      await DBService.createNotification({
+        userId: currentUser.uid,
+        title: "Skill Passport Re-Sealed",
+        message: `Your assessment on "${currentChallenge.title}" achieved Trust Score ${trustBreakdown.trustScore}%. SHA-256 cryptographic seal updated.`,
+        type: "passport",
+        link: "my-skills-and-passport.html"
+      });
+
+      // Redirect to Passport
+      window.location.href = "my-skills-and-passport.html";
+    }
+  </script>
+</body>
+</html>
