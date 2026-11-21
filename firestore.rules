@@ -1,0 +1,138 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for Role-Based Access Control (RBAC)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isStudent() {
+      return hasRole('student');
+    }
+
+    function isEmployer() {
+      return hasRole('employer');
+    }
+
+    function isUniversity() {
+      return hasRole('university');
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if false; // Soft delete only via accountStatus
+    }
+
+    // 2. Student Profiles
+    match /studentProfiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId) && (isStudent() || request.resource.data.uid == userId);
+      allow delete: if false;
+    }
+
+    // 3. Employer Profiles
+    match /employerProfiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId) && (isEmployer() || request.resource.data.uid == userId);
+      allow delete: if false;
+    }
+
+    // 4. University Profiles
+    match /universityProfiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId) && (isUniversity() || request.resource.data.uid == userId);
+      allow delete: if false;
+    }
+
+    // 5. Challenges
+    match /challenges/{challengeId} {
+      allow read: if isAuthenticated();
+      allow write: if isUniversity() || request.auth.token.admin == true;
+    }
+
+    // 6. Submissions
+    match /submissions/{submissionId} {
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid ||
+        isEmployer() ||
+        isUniversity()
+      );
+      allow create: if isStudent() && request.resource.data.studentId == request.auth.uid;
+      allow update: if isStudent() && resource.data.studentId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // 7. Evaluations
+    match /evaluations/{evaluationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid ||
+        isEmployer() ||
+        isUniversity()
+      );
+      allow create, update: if isAuthenticated(); // Automated assessment engine or trusted backend
+      allow delete: if false;
+    }
+
+    // 8. Skill Passports (Public read for third-party cryptographic verification)
+    match /skillPassports/{passportId} {
+      allow read: if true; // Publicly verifiable via QR code / verify.html
+      allow create, update: if isAuthenticated() && (
+        request.resource.data.studentId == request.auth.uid ||
+        hasRole('system')
+      );
+      allow delete: if false;
+    }
+
+    // 9. Jobs
+    match /jobs/{jobId} {
+      allow read: if isAuthenticated();
+      allow create: if isEmployer();
+      allow update, delete: if isEmployer() && resource.data.employerId == request.auth.uid;
+    }
+
+    // 10. Shortlists
+    match /shortlists/{shortlistId} {
+      allow read: if isAuthenticated() && (
+        resource.data.employerId == request.auth.uid ||
+        resource.data.studentId == request.auth.uid
+      );
+      allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
+      allow update, delete: if isEmployer() && resource.data.employerId == request.auth.uid;
+    }
+
+    // 11. Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // 12. Follow-Up Questions
+    match /followUpQuestions/{questionId} {
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid ||
+        isEmployer() ||
+        isUniversity()
+      );
+      allow create, update: if isStudent() && request.resource.data.studentId == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}

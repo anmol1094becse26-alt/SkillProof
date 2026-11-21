@@ -1,0 +1,35 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Candidate and user profile images
+    match /profileImages/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId)
+                    && request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+    }
+
+    // Employer company branding and logos
+    match /companyLogos/{employerId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(employerId)
+                    && request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+    }
+
+    // Skill Passport cryptographic exports (PDF / JSON)
+    match /passportExports/{studentId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(studentId);
+    }
+  }
+}
