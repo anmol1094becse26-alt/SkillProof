@@ -3,12 +3,16 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 5000;
-const APP_DIR = path.join(__dirname, 'app');
+
+// Prefer compiled client/dist, fallback to app
+const CLIENT_DIST = path.join(__dirname, 'client', 'dist');
+const APP_DIR = fs.existsSync(CLIENT_DIST) ? CLIENT_DIST : path.join(__dirname, 'app');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.htm': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
+  '.mjs': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
@@ -38,6 +42,11 @@ const server = http.createServer((req, res) => {
     filePath = filePath + '.html';
   }
 
+  // SPA fallback for dynamic routes like /passport/:id
+  if (!fs.existsSync(filePath) && !path.extname(cleanUrl)) {
+    filePath = path.join(APP_DIR, 'index.html');
+  }
+
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath).toLowerCase();
     const mime = MIME_TYPES[ext] || 'application/octet-stream';
@@ -50,7 +59,6 @@ const server = http.createServer((req, res) => {
       'Cache-Control': 'no-cache, no-store, must-revalidate'
     });
     res.end(content);
-    console.log(`[${new Date().toLocaleTimeString()}] 200 ${req.method} ${req.url}`);
   } else {
     const notFound = `<html><head><title>404 Not Found</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;"><h2>404 - SkillProof Resource Not Found</h2><p>Cannot find: ${req.url}</p><a href="/">Return to SkillProof Home</a></body></html>`;
     res.writeHead(404, {
@@ -58,15 +66,14 @@ const server = http.createServer((req, res) => {
       'Content-Length': Buffer.byteLength(notFound)
     });
     res.end(notFound);
-    console.log(`[${new Date().toLocaleTimeString()}] 404 ${req.method} ${req.url}`);
   }
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log('==================================================================');
-  console.log('     SKILLPROOF - High-Performance Enterprise Verification Server ');
-  console.log('     "Don\'t Just Claim Your Skills. Prove Them."                  ');
-  console.log('==================================================================');
-  console.log(`[ONLINE] SkillProof Server running at http://localhost:${PORT}/`);
-  console.log(`[ONLINE] Serving application from: ${APP_DIR}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`===================================================================`);
+  console.log(`   SKILLPROOF LIVE PRODUCTION SERVER RUNNING ON PORT ${PORT}`);
+  console.log(`   Serving Directory: ${APP_DIR}`);
+  console.log(`   URL: http://localhost:${PORT}/`);
+  console.log(`   Supabase Connected: https://wosrzuibwgtvulnrrhte.supabase.co`);
+  console.log(`===================================================================`);
 });
