@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillProof — Enterprise Recruiter Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: '#0152D9',
+            brandContainer: '#356DF3',
+            brandSurface: '#EFF4FF',
+            canvas: '#F8F9FF',
+            ink: '#0B1C30',
+            slateMuted: '#434654',
+            emeraldDark: '#006B49',
+            mintLight: '#6FFBBE',
+            terminalBg: '#213145',
+            terminalDark: '#0B1C30'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#F8F9FF] text-[#0B1C30] font-sans min-h-screen flex flex-col selection:bg-brand selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
+    <div class="flex items-center gap-4">
+      <a href="employer-dashboard.html" class="flex items-center gap-2 group">
+        <div class="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm shadow-brand/20">
+          <span class="material-symbols-outlined text-xl">business_center</span>
+        </div>
+        <div>
+          <span class="text-lg font-bold tracking-tight text-ink">Skill<span class="text-brand">Proof</span></span>
+          <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 ml-2 bg-indigo-50 text-indigo-700 rounded border border-indigo-200">RECRUITER</span>
+        </div>
+      </a>
+      <span class="hidden sm:inline-block text-slate-300">|</span>
+      <div id="company-badge-header" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700">
+        <span class="material-symbols-outlined text-sm text-brand">domain</span>
+        <span id="header-company-name">Stripe Enterprise</span>
+      </div>
+    </div>
+
+    <!-- Right Header Actions -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 p-1.5 rounded-xl bg-slate-50 border border-slate-200/80">
+        <img id="employer-avatar" src="" alt="Recruiter" class="w-8 h-8 rounded-full object-cover">
+        <div class="hidden sm:block text-left text-xs pr-2">
+          <p id="employer-user-name" class="font-bold text-ink">Stripe Talent</p>
+          <p id="employer-user-role" class="text-[10px] text-slate-400">Technical Recruiter</p>
+        </div>
+      </div>
+
+      <button onclick="AuthService.signOut()" class="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Sign Out">
+        <span class="material-symbols-outlined text-xl">logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Secondary Tab Bar -->
+  <div class="bg-white border-b border-slate-200 px-4 sm:px-8">
+    <div class="max-w-7xl mx-auto flex items-center gap-6 overflow-x-auto text-xs font-semibold">
+      <button onclick="switchTab('candidates')" id="tab-btn-candidates" class="py-3.5 border-b-2 border-brand text-brand flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-base">search</span>
+        <span>Candidate Search</span>
+      </button>
+      <button onclick="switchTab('jobs')" id="tab-btn-jobs" class="py-3.5 border-b-2 border-transparent text-slate-500 hover:text-ink flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-base">work</span>
+        <span>Active Job Roles</span>
+      </button>
+      <button onclick="switchTab('shortlists')" id="tab-btn-shortlists" class="py-3.5 border-b-2 border-transparent text-slate-500 hover:text-ink flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-base">badge</span>
+        <span>Shortlisted Pipeline</span>
+        <span id="shortlist-count-badge" class="px-1.5 py-0.2 rounded-full bg-blue-100 text-brand text-[10px] font-mono">2</span>
+      </button>
+      <button onclick="switchTab('profile')" id="tab-btn-profile" class="py-3.5 border-b-2 border-transparent text-slate-500 hover:text-ink flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-base">domain</span>
+        <span>Company Profile</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Space -->
+  <main class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-8">
+    
+    <!-- TAB 1: Candidate Search -->
+    <section id="section-candidates" class="space-y-6">
+      
+      <!-- Filter Bar -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="relative flex-1 w-full">
+            <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-lg">search</span>
+            <input 
+              type="text" 
+              id="search-name-input" 
+              oninput="applyCandidateFilters()" 
+              placeholder="Search by student name, major, or keywords..." 
+              class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30"
+            />
+          </div>
+          <div class="text-xs font-mono text-slate-500 shrink-0">
+            Matching: <strong id="filter-candidate-count" class="text-ink">5</strong> Candidates
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Filter by Technical Skill</label>
+            <select id="filter-skill-select" onchange="applyCandidateFilters()" class="w-full p-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+              <option value="All">All Technical Competencies</option>
+              <option value="Algorithms">Algorithms</option>
+              <option value="Data Structures">Data Structures</option>
+              <option value="System Design">System Design</option>
+              <option value="Security">Security</option>
+              <option value="Distributed Systems">Distributed Systems</option>
+              <option value="Rate Limiting">Rate Limiting</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Filter by University Cohort</label>
+            <select id="filter-uni-select" onchange="applyCandidateFilters()" class="w-full p-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+              <option value="All">All Partner Universities</option>
+              <option value="Stanford">Stanford University</option>
+              <option value="MIT">Massachusetts Institute of Technology</option>
+              <option value="Berkeley">UC Berkeley</option>
+              <option value="Carnegie">Carnegie Mellon University</option>
+              <option value="Oxford">University of Oxford</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 mb-1">Minimum Trust Score</label>
+            <select id="filter-trust-select" onchange="applyCandidateFilters()" class="w-full p-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+              <option value="0">Any Trust Score</option>
+              <option value="80">80+ (Proficient)</option>
+              <option value="90">90+ (Advanced)</option>
+              <option value="95">95+ (Mastery Only)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Candidates Grid -->
+      <div id="candidates-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Dynamically populated -->
+      </div>
+
+    </section>
+
+    <!-- TAB 2: Active Job Roles -->
+    <section id="section-jobs" class="space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-ink">Active Technical Job Postings</h2>
+          <p class="text-xs text-slateMuted">Post technical positions with required verified skills and minimum gauntlet score thresholds.</p>
+        </div>
+        <button onclick="openPostJobModal()" class="px-4 py-2 bg-brand text-white text-xs font-bold rounded-xl shadow-md shadow-brand/20 hover:bg-blue-700 transition-colors flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">add</span>
+          <span>Post Technical Role</span>
+        </button>
+      </div>
+
+      <div id="employer-jobs-list" class="grid grid-cols-1 gap-4">
+        <!-- Dynamically populated -->
+      </div>
+    </section>
+
+    <!-- TAB 3: Shortlisted Candidates -->
+    <section id="section-shortlists" class="space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-ink">Recruiter Shortlisted Pipeline</h2>
+          <p class="text-xs text-slateMuted">Manage candidate statuses across your technical interview panel stages.</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-slate-500 uppercase font-mono border-b border-slate-200">
+                <th class="py-3 px-5">Candidate</th>
+                <th class="py-3 px-4">University & Major</th>
+                <th class="py-3 px-4">Target Job</th>
+                <th class="py-3 px-4">Trust Score</th>
+                <th class="py-3 px-4">Pipeline Status</th>
+                <th class="py-3 px-4">Notes</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="shortlists-tbody" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: Company Profile -->
+    <section id="section-profile" class="space-y-6 hidden max-w-2xl">
+      <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+        <div>
+          <h2 class="text-base font-bold text-ink">Employer Organization Profile</h2>
+          <p class="text-xs text-slateMuted">Update company branding and recruiter credentials displayed to student cohorts.</p>
+        </div>
+
+        <form id="company-profile-form" onsubmit="handleSaveCompanyProfile(event)" class="space-y-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Company Name</label>
+            <input type="text" id="cp-company-name" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Industry Sector</label>
+            <input type="text" id="cp-industry" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Company Website</label>
+              <input type="url" id="cp-website" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Company Size</label>
+              <input type="text" id="cp-size" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Company Mission & Technical Stack</label>
+            <textarea id="cp-desc" rows="3" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30"></textarea>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-end">
+            <button type="submit" class="px-5 py-2.5 bg-brand text-white font-bold text-xs rounded-xl shadow-md hover:bg-blue-700 transition-colors">
+              Save Company Settings
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Post Technical Role Modal -->
+  <div id="post-job-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-sm font-bold text-ink flex items-center gap-2">
+          <span class="material-symbols-outlined text-brand">post_add</span>
+          <span>Post Technical Role with Minimum Verification Thresholds</span>
+        </h3>
+        <button onclick="closePostJobModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+
+      <form id="post-job-form" onsubmit="handleCreateJob(event)" class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Job Title</label>
+          <input type="text" id="pj-title" required placeholder="e.g. Distributed Systems Infrastructure Engineer" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Location</label>
+            <input type="text" id="pj-location" required placeholder="San Francisco / Remote" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Employment Type</label>
+            <select id="pj-type" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30">
+              <option value="Full-time">Full-time</option>
+              <option value="Internship">Internship</option>
+              <option value="Contract">Contract</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Job Description</label>
+          <textarea id="pj-desc" required rows="3" placeholder="Describe role responsibilities and engineering team mission..." class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand/30"></textarea>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Required Verified Skills (Comma-separated)</label>
+          <input type="text" id="pj-skills" required placeholder="Algorithms, System Design, Distributed Systems" class="w-full p-2.5 rounded-xl border border-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Minimum Verified Score Threshold (%)</label>
+          <input type="number" id="pj-min-score" min="50" max="100" value="85" class="w-full p-2.5 rounded-xl border border-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30">
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" onclick="closePostJobModal()" class="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-brand text-white font-bold rounded-xl shadow hover:bg-blue-700">Publish Role</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/seed-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script src="js/db-service.js"></script>
+  <script src="js/passport-service.js"></script>
+  <script src="js/job-matching.js"></script>
+  <script src="js/notification-service.js"></script>
+
+  <script>
+    let currentUser = null;
+    let employerProfile = null;
+    let allCandidates = [];
+    let allJobs = [];
+    let myShortlists = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      currentUser = AuthService.requireAuth(["employer"]);
+      if (!currentUser) return;
+
+      await loadEmployerData();
+    });
+
+    async function loadEmployerData() {
+      employerProfile = await DBService.getEmployerProfile(currentUser.uid);
+      
+      const compName = (employerProfile && employerProfile.companyName) || currentUser.name || "Enterprise";
+      document.getElementById("header-company-name").textContent = compName;
+      document.getElementById("employer-user-name").textContent = currentUser.name;
+      document.getElementById("employer-avatar").src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(compName)}&background=0152D9&color=fff`;
+
+      // 1. Load Candidates with Passports
+      allCandidates = await DBService.getAllStudentsWithPassports();
+
+      // 2. Load Jobs
+      allJobs = await DBService.getJobs();
+
+      // 3. Load Shortlists
+      myShortlists = await DBService.getShortlists(currentUser.uid);
+      document.getElementById("shortlist-count-badge").textContent = myShortlists.length;
+
+      // Render initial view
+      applyCandidateFilters();
+      renderJobsList();
+      renderShortlistsTable();
+      populateCompanyProfileForm();
+    }
+
+    function switchTab(tab) {
+      const tabs = ["candidates", "jobs", "shortlists", "profile"];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const sec = document.getElementById(`section-${t}`);
+        if (t === tab) {
+          btn.className = "py-3.5 border-b-2 border-brand text-brand flex items-center gap-1.5 transition-colors font-bold";
+          sec.classList.remove("hidden");
+        } else {
+          btn.className = "py-3.5 border-b-2 border-transparent text-slate-500 hover:text-ink flex items-center gap-1.5 transition-colors";
+          sec.classList.add("hidden");
+        }
+      });
+    }
+
+    // Candidate Search & Filtering
+    function applyCandidateFilters() {
+      const searchTxt = document.getElementById("search-name-input").value.toLowerCase().trim();
+      const skillFilter = document.getElementById("filter-skill-select").value;
+      const uniFilter = document.getElementById("filter-uni-select").value;
+      const minTrust = parseInt(document.getElementById("filter-trust-select").value || "0", 10);
+
+      const filtered = allCandidates.filter(c => {
+        // Name & Major match
+        const matchesName = !searchTxt || 
+          c.name.toLowerCase().includes(searchTxt) || 
+          c.course.toLowerCase().includes(searchTxt) ||
+          c.university.toLowerCase().includes(searchTxt);
+
+        // Uni filter
+        const matchesUni = uniFilter === "All" || c.university.toLowerCase().includes(uniFilter.toLowerCase());
+
+        // Trust score filter
+        const trust = c.passport ? c.passport.trustScore : 0;
+        const matchesTrust = trust >= minTrust;
+
+        // Skill filter
+        let matchesSkill = true;
+        if (skillFilter !== "All") {
+          const verified = (c.passport && c.passport.verifiedSkills) || [];
+          matchesSkill = verified.some(s => s.skill.toLowerCase() === skillFilter.toLowerCase());
+        }
+
+        return matchesName && matchesUni && matchesTrust && matchesSkill;
+      });
+
+      document.getElementById("filter-candidate-count").textContent = filtered.length;
+      renderCandidateCards(filtered);
+    }
+
+    function renderCandidateCards(candidates) {
+      const container = document.getElementById("candidates-cards-grid");
+      if (!container) return;
+
+      if (candidates.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+            <span class="material-symbols-outlined text-4xl mb-1 text-slate-400">person_search</span>
+            <p class="text-sm font-semibold text-slate-700">No candidates match current filters</p>
+            <p class="text-xs text-slate-400 mt-1">Try lowering the minimum trust score or selecting All Skills.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = candidates.map(c => {
+        const pass = c.passport;
+        const trust = pass ? pass.trustScore : 0;
+        const skills = (pass && pass.verifiedSkills) || [];
+        const isShortlisted = myShortlists.some(sl => sl.studentId === c.uid);
+
+        return `
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-brand/40 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between gap-3 mb-3">
+                <div class="flex items-center gap-3">
+                  <img src="${c.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=0152D9&color=fff`}" class="w-10 h-10 rounded-full object-cover border border-slate-200">
+                  <div>
+                    <h4 class="text-sm font-bold text-ink leading-tight">${c.name}</h4>
+                    <p class="text-[11px] text-slateMuted truncate max-w-[150px]">${c.university}</p>
+                  </div>
+                </div>
+
+                <!-- Trust Score Pill -->
+                <div class="text-right shrink-0">
+                  <span class="text-xs font-mono font-black ${trust >= 90 ? 'text-emerald-700' : 'text-blue-700'}">${trust}%</span>
+                  <span class="block text-[9px] font-mono text-slate-400 uppercase">Trust Score</span>
+                </div>
+              </div>
+
+              <p class="text-xs text-slate-600 line-clamp-2 mb-3 leading-relaxed">${c.bio || c.course}</p>
+
+              <!-- Verified Competency Badges -->
+              <div class="space-y-1 mb-4">
+                <span class="text-[10px] font-mono uppercase text-slate-400 font-bold block">Verified Competencies:</span>
+                <div class="flex flex-wrap gap-1.5">
+                  ${skills.length > 0 ? skills.slice(0, 4).map(s => `
+                    <span class="text-[10px] font-mono bg-blue-50 text-brand px-2 py-0.5 rounded border border-blue-200">
+                      ${s.skill}: ${s.score}%
+                    </span>
+                  `).join('') : `<span class="text-[10px] text-slate-400 italic">No verified gauntlets</span>`}
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Bottom Actions -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+              <a href="verify.html?id=${pass ? pass.passportId : ''}" target="_blank" class="text-xs font-semibold text-brand hover:underline flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">badge</span>
+                <span>${pass ? pass.passportId : 'Passport'}</span>
+              </a>
+
+              <button onclick="handleToggleShortlist('${c.uid}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all ${
+                isShortlisted 
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }">
+                <span class="material-symbols-outlined text-sm ${isShortlisted ? 'text-emerald-600' : 'text-slate-500'}">
+                  ${isShortlisted ? 'check' : 'add'}
+                </span>
+                <span>${isShortlisted ? 'Shortlisted' : 'Shortlist'}</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function handleToggleShortlist(studentId) {
+      const res = await DBService.toggleShortlist(currentUser.uid, studentId, null, "Shortlisted from Recruiter Search");
+      NotificationService.showToast(
+        res.shortlisted ? "Candidate Shortlisted" : "Shortlist Removed",
+        res.shortlisted ? "Candidate added to your interviewing pipeline." : "Candidate removed from pipeline.",
+        res.shortlisted ? "success" : "info"
+      );
+      myShortlists = await DBService.getShortlists(currentUser.uid);
+      document.getElementById("shortlist-count-badge").textContent = myShortlists.length;
+      applyCandidateFilters();
+      renderShortlistsTable();
+    }
+
+    // Jobs Section
+    function renderJobsList() {
+      const container = document.getElementById("employer-jobs-list");
+      if (!container) return;
+
+      container.innerHTML = allJobs.map(j => `
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono uppercase text-brand font-semibold">${j.companyName}</span>
+              <span class="text-slate-300">•</span>
+              <span class="text-xs text-slate-500">${j.location}</span>
+            </div>
+            <h3 class="text-base font-bold text-ink">${j.title}</h3>
+            <p class="text-xs text-slateMuted max-w-2xl">${j.description}</p>
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              ${(j.requiredSkills || []).map(sk => `
+                <span class="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                  ${sk} (min ${(j.minimumScores && j.minimumScores[sk]) || 80}%)
+                </span>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="text-right shrink-0">
+            <button onclick="rankCandidatesForSpecificJob('${j.jobId}')" class="px-3.5 py-2 bg-blue-50 text-brand hover:bg-blue-100 border border-blue-200 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm">trending_up</span>
+              <span>Rank Candidates</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function rankCandidatesForSpecificJob(jobId) {
+      const job = allJobs.find(j => j.jobId === jobId);
+      if (!job) return;
+
+      const ranked = JobMatchingEngine.rankCandidatesForJob(job, allCandidates);
+      switchTab('candidates');
+      NotificationService.showToast("Candidates Ranked", `Sorted candidates by mathematical match percentage for: ${job.title}`, "info");
+      renderCandidateCards(ranked.map(r => r.candidate));
+    }
+
+    // Shortlists Table
+    function renderShortlistsTable() {
+      const tbody = document.getElementById("shortlists-tbody");
+      if (!tbody) return;
+
+      if (myShortlists.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-400">
+              No candidates shortlisted yet. Use the Candidate Search tab to find verified talent.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = myShortlists.map(sl => {
+        const student = allCandidates.find(c => c.uid === sl.studentId) || { name: "Candidate", university: "University", course: "CS" };
+        const pass = student.passport;
+        const trust = pass ? `${pass.trustScore}%` : "95%";
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="py-3 px-5 font-bold text-ink">${student.name}</td>
+            <td class="py-3 px-4 text-slate-600">${student.university}</td>
+            <td class="py-3 px-4 font-mono text-slate-600">${sl.jobId === 'job_general' ? 'General Talent Pool' : 'Core Engineering'}</td>
+            <td class="py-3 px-4 font-mono font-bold text-emerald-700">${trust}</td>
+            <td class="py-3 px-4">
+              <select onchange="handleUpdateShortlistStatus('${sl.shortlistId}', this.value)" class="text-xs p-1 rounded-lg border border-slate-300 font-semibold ${
+                sl.status === 'offered' ? 'bg-emerald-50 text-emerald-800' :
+                sl.status === 'interviewing' ? 'bg-blue-50 text-brand' :
+                'bg-slate-50 text-slate-700'
+              }">
+                <option value="shortlisted" ${sl.status === 'shortlisted' ? 'selected' : ''}>Shortlisted</option>
+                <option value="interviewing" ${sl.status === 'interviewing' ? 'selected' : ''}>Interviewing</option>
+                <option value="offered" ${sl.status === 'offered' ? 'selected' : ''}>Offer Extended</option>
+              </select>
+            </td>
+            <td class="py-3 px-4 text-slate-500 italic max-w-xs truncate">${sl.notes || 'No notes added'}</td>
+            <td class="py-3 px-4 text-right">
+              <a href="verify.html?id=${pass ? pass.passportId : ''}" target="_blank" class="text-brand hover:underline font-semibold mr-3">Verify</a>
+              <button onclick="handleToggleShortlist('${sl.studentId}')" class="text-rose-600 hover:underline">Remove</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function handleUpdateShortlistStatus(shortlistId, status) {
+      await DBService.updateShortlistStatus(shortlistId, status);
+      NotificationService.showToast("Status Updated", `Candidate moved to ${status}.`, "success");
+    }
+
+    // Post Job Modal
+    function openPostJobModal() {
+      document.getElementById("post-job-modal").classList.remove("hidden");
+    }
+
+    function closePostJobModal() {
+      document.getElementById("post-job-modal").classList.add("hidden");
+    }
+
+    async function handleCreateJob(e) {
+      e.preventDefault();
+      const title = document.getElementById("pj-title").value.trim();
+      const location = document.getElementById("pj-location").value.trim();
+      const type = document.getElementById("pj-type").value;
+      const desc = document.getElementById("pj-desc").value.trim();
+      const skills = document.getElementById("pj-skills").value.split(",").map(s => s.trim()).filter(Boolean);
+      const minScore = parseInt(document.getElementById("pj-min-score").value || "85", 10);
+
+      const minimumScores = {};
+      skills.forEach(s => minimumScores[s] = minScore);
+
+      const newJob = await DBService.createJob({
+        employerId: currentUser.uid,
+        companyName: (employerProfile && employerProfile.companyName) || currentUser.name || "Stripe",
+        title: title,
+        description: desc,
+        location: location,
+        employmentType: type,
+        requiredSkills: skills,
+        minimumScores: minimumScores
+      });
+
+      allJobs.unshift(newJob);
+      renderJobsList();
+      closePostJobModal();
+      NotificationService.showToast("Role Published", "Your technical position is live for verified candidates.", "success");
+    }
+
+    // Company Profile
+    function populateCompanyProfileForm() {
+      if (employerProfile) {
+        document.getElementById("cp-company-name").value = employerProfile.companyName || "";
+        document.getElementById("cp-industry").value = employerProfile.industry || "";
+        document.getElementById("cp-website").value = employerProfile.website || "";
+        document.getElementById("cp-size").value = employerProfile.companySize || "";
+        document.getElementById("cp-desc").value = employerProfile.companyDescription || "";
+      }
+    }
+
+    async function handleSaveCompanyProfile(e) {
+      e.preventDefault();
+      const updates = {
+        companyName: document.getElementById("cp-company-name").value.trim(),
+        industry: document.getElementById("cp-industry").value.trim(),
+        website: document.getElementById("cp-website").value.trim(),
+        companySize: document.getElementById("cp-size").value.trim(),
+        companyDescription: document.getElementById("cp-desc").value.trim()
+      };
+      await DBService.updateEmployerProfile(currentUser.uid, updates);
+      NotificationService.showToast("Profile Saved", "Company organization details updated successfully.", "success");
+    }
+  </script>
+</body>
+</html>
