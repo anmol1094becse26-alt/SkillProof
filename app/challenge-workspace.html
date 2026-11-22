@@ -289,6 +289,8 @@
   <script src="js/trust-score.js"></script>
   <script src="js/passport-service.js"></script>
   <script src="js/notification-service.js"></script>
+  <script src="js/ai-service.js"></script>
+  <script src="js/ai-followup-modal.js"></script>
 
   <script>
     let currentUser = null;
@@ -448,145 +450,30 @@
       );
     }
 
-    // Modal controls
+    // ── AI-Powered Submit & Verify (replaces static modal) ────────────────
     function openVerificationModal() {
       if (!latestEvaluation) {
-        alert("Please run your code tests before submitting for cryptographic verification.");
+        alert("Please run your code tests first before submitting for AI verification.");
         return;
       }
-      document.getElementById("verification-modal").classList.remove("hidden");
+      const code = document.getElementById("code-editor").value;
+      AIFollowUpModal.open({
+        challenge: currentChallenge,
+        evaluation: latestEvaluation,
+        code: code,
+        currentUser: currentUser,
+        onComplete: null  // AIFollowUpModal handles redirect internally
+      });
     }
 
     function closeVerificationModal() {
-      document.getElementById("verification-modal").classList.add("hidden");
+      AIFollowUpModal.close();
     }
 
-    // Final Submission Handler
+    // Legacy stub — full logic now lives in ai-followup-modal.js
     async function handleFinalSubmission(e) {
-      e.preventDefault();
-      const submitBtn = document.getElementById("final-submit-btn");
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Computing SHA-256 Seal...";
-
-      const code = document.getElementById("code-editor").value;
-      const explanation = document.getElementById("val-explanation").value.trim();
-      const edgeCaseAnswer = document.getElementById("val-edge-case").value.trim();
-
-      // 1. Get past scores for consistency
-      const pastEvals = await DBService.getEvaluations(currentUser.uid);
-      const pastScores = pastEvals.map(ev => ev.totalScore || 85);
-
-      // 2. Compute Trust Score
-      const trustBreakdown = TrustScoreEngine.computeTrustScore({
-        S_perf: latestEvaluation.S_perf || 90,
-        explanationText: explanation,
-        followUpAnswers: {
-          edgeCaseDefense: edgeCaseAnswer
-        },
-        pastScores: pastScores,
-        similarityScore: latestEvaluation.similarityScore || 0
-      });
-
-      // 3. Create Submission record
-      const subId = "sub_" + Date.now();
-      const evalId = "eval_" + Date.now();
-
-      const newSubmission = await DBService.createSubmission({
-        submissionId: subId,
-        studentId: currentUser.uid,
-        challengeId: currentChallenge.challengeId,
-        language: "javascript",
-        code: code,
-        explanation: explanation,
-        followUpAnswers: {
-          edgeCaseDefense: edgeCaseAnswer
-        },
-        submittedAt: new Date().toISOString(),
-        status: "evaluated",
-        evaluationId: evalId
-      });
-
-      // 4. Create Evaluation record
-      const newEvaluation = await DBService.createEvaluation({
-        evaluationId: evalId,
-        submissionId: subId,
-        studentId: currentUser.uid,
-        challengeId: currentChallenge.challengeId,
-        totalScore: trustBreakdown.trustScore,
-        skillScores: latestEvaluation.skillScores,
-        passedTests: latestEvaluation.passedTests,
-        totalTests: latestEvaluation.totalTests,
-        testResults: latestEvaluation.testResults,
-        feedback: latestEvaluation.feedback,
-        areasForImprovement: latestEvaluation.areasForImprovement,
-        explanationScore: trustBreakdown.components.S_explain,
-        followUpScore: trustBreakdown.components.S_followup,
-        similarityScore: latestEvaluation.similarityScore,
-        verificationStatus: trustBreakdown.flaggedUnderReview ? "Under Review" : "Approved",
-        evaluatedAt: new Date().toISOString()
-      });
-
-      // 5. Update or Mint Skill Passport
-      let passport = await DBService.getPassportByStudentId(currentUser.uid);
-      const studentProfile = await DBService.getStudentProfile(currentUser.uid);
-
-      if (!passport) {
-        passport = {
-          passportId: "SKP-" + Math.floor(1000 + Math.random() * 9000),
-          studentId: currentUser.uid,
-          studentName: currentUser.name,
-          university: (studentProfile && studentProfile.university) || "Stanford University",
-          course: (studentProfile && studentProfile.course) || "Computer Science",
-          assessmentCount: 0,
-          verifiedSkills: [],
-          issuedAt: new Date().toISOString()
-        };
-      }
-
-      // Merge verified skills
-      const verifiedList = passport.verifiedSkills ? [...passport.verifiedSkills] : [];
-      (currentChallenge.requiredSkills || []).forEach(sk => {
-        const score = latestEvaluation.skillScores[sk] || trustBreakdown.trustScore;
-        const level = PassportService.getMasteryLevel(score);
-        const existingIdx = verifiedList.findIndex(v => v.skill.toLowerCase() === sk.toLowerCase());
-        const entry = {
-          skill: sk,
-          score: score,
-          level: level,
-          verifiedAt: new Date().toISOString().split("T")[0],
-          challengeTitle: currentChallenge.title
-        };
-        if (existingIdx >= 0) {
-          verifiedList[existingIdx] = entry;
-        } else {
-          verifiedList.push(entry);
-        }
-      });
-
-      passport.verifiedSkills = verifiedList;
-      passport.assessmentCount = (passport.assessmentCount || 0) + 1;
-      passport.trustScore = trustBreakdown.trustScore;
-      passport.verificationStatus = trustBreakdown.flaggedUnderReview ? "Under Review" : "Cryptographically Verified";
-      passport.telemetry = trustBreakdown.telemetry;
-      passport.updatedAt = new Date().toISOString();
-
-      // Mint SHA-256 Seal
-      passport.cryptographicSeal = await PassportService.generatePassportSeal(passport);
-      passport.publicVerificationUrl = `verify.html?id=${passport.passportId}`;
-
-      await DBService.savePassport(passport);
-
-      // 6. Dispatch Notification
-      await DBService.createNotification({
-        userId: currentUser.uid,
-        title: "Skill Passport Re-Sealed",
-        message: `Your assessment on "${currentChallenge.title}" achieved Trust Score ${trustBreakdown.trustScore}%. SHA-256 cryptographic seal updated.`,
-        type: "passport",
-        link: "my-skills-and-passport.html"
-      });
-
-      // Redirect to Passport
-      window.location.href = "my-skills-and-passport.html";
+      if (e) e.preventDefault();
+      // No-op: handled by AIFollowUpModal._finalSubmit
     }
   </script>
 </body>

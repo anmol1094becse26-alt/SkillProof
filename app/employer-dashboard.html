@@ -87,6 +87,11 @@
         <span>Shortlisted Pipeline</span>
         <span id="shortlist-count-badge" class="px-1.5 py-0.2 rounded-full bg-blue-100 text-brand text-[10px] font-mono">2</span>
       </button>
+      <button onclick="switchTab('challenges')" id="tab-btn-challenges" class="py-3.5 border-b-2 border-transparent text-slate-500 hover:text-ink flex items-center gap-1.5 transition-colors whitespace-nowrap">
+        <span class="material-symbols-outlined text-base">auto_awesome</span>
+        <span>AI Challenges</span>
+        <span class="px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-mono">NEW</span>
+      </button>
       <button onclick="switchTab('profile')" id="tab-btn-profile" class="py-3.5 border-b-2 border-transparent text-slate-500 hover:text-ink flex items-center gap-1.5 transition-colors">
         <span class="material-symbols-outlined text-base">domain</span>
         <span>Company Profile</span>
@@ -212,6 +217,63 @@
       </div>
     </section>
 
+    <!-- TAB 5: AI Challenge Generator -->
+    <section id="section-challenges" class="space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-ink flex items-center gap-2">
+            <span class="material-symbols-outlined text-brand">auto_awesome</span>
+            AI Challenge Generator
+          </h2>
+          <p class="text-xs text-slateMuted mt-0.5">Create verified, AI-generated coding challenges for your technical hiring pipeline. Challenges are saved and immediately available to candidates.</p>
+        </div>
+        <button onclick="ChallengeGeneratorModal.open({ onPublish: onChallengePublished })"
+          class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-brand hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-md shadow-brand/20 transition-all">
+          <span class="material-symbols-outlined text-sm">auto_awesome</span>
+          Generate Challenge with AI
+        </button>
+      </div>
+
+      <!-- How it works callout -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="p-4 bg-white rounded-2xl border border-slate-200 text-xs space-y-2">
+          <div class="w-8 h-8 rounded-xl bg-brand/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-brand text-lg">tune</span>
+          </div>
+          <p class="font-bold text-ink">1. Configure Parameters</p>
+          <p class="text-slateMuted">Pick skill track, difficulty, task style, and optionally add company context.</p>
+        </div>
+        <div class="p-4 bg-white rounded-2xl border border-slate-200 text-xs space-y-2">
+          <div class="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-indigo-600 text-lg">psychology</span>
+          </div>
+          <p class="font-bold text-ink">2. AI Generates Challenge</p>
+          <p class="text-slateMuted">Gemini crafts a realistic workplace scenario with test cases and an evaluation rubric.</p>
+        </div>
+        <div class="p-4 bg-white rounded-2xl border border-slate-200 text-xs space-y-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-emerald-600 text-lg">publish</span>
+          </div>
+          <p class="font-bold text-ink">3. Preview & Publish</p>
+          <p class="text-slateMuted">Edit the challenge, then publish — it's live for candidates instantly.</p>
+        </div>
+      </div>
+
+      <!-- AI-generated challenges list -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-ink">Published Challenges</h3>
+          <span class="text-xs text-slate-400 font-mono" id="ai-challenges-count">Loading...</span>
+        </div>
+        <div id="ai-challenges-list" class="space-y-3">
+          <div class="p-8 bg-white rounded-2xl border border-dashed border-slate-300 text-center text-slate-400 text-xs">
+            <span class="material-symbols-outlined text-3xl mb-2 block opacity-30">auto_awesome</span>
+            No challenges generated yet. Click <strong>"Generate Challenge with AI"</strong> to create your first one.
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- TAB 4: Company Profile -->
     <section id="section-profile" class="space-y-6 hidden max-w-2xl">
       <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-5">
@@ -314,6 +376,8 @@
   <script src="js/passport-service.js"></script>
   <script src="js/job-matching.js"></script>
   <script src="js/notification-service.js"></script>
+  <script src="js/ai-service.js"></script>
+  <script src="js/challenge-generator-modal.js"></script>
 
   <script>
     let currentUser = null;
@@ -355,10 +419,11 @@
     }
 
     function switchTab(tab) {
-      const tabs = ["candidates", "jobs", "shortlists", "profile"];
+      const tabs = ["candidates", "jobs", "shortlists", "challenges", "profile"];
       tabs.forEach(t => {
         const btn = document.getElementById(`tab-btn-${t}`);
         const sec = document.getElementById(`section-${t}`);
+        if (!btn || !sec) return;
         if (t === tab) {
           btn.className = "py-3.5 border-b-2 border-brand text-brand flex items-center gap-1.5 transition-colors font-bold";
           sec.classList.remove("hidden");
@@ -367,6 +432,7 @@
           sec.classList.add("hidden");
         }
       });
+      if (tab === 'challenges') loadAIChallenges();
     }
 
     // Candidate Search & Filtering
@@ -653,6 +719,64 @@
       await DBService.updateEmployerProfile(currentUser.uid, updates);
       NotificationService.showToast("Profile Saved", "Company organization details updated successfully.", "success");
     }
+
+    // ── AI Challenges Tab ─────────────────────────────────────────────────
+    let aiChallengesCache = [];
+
+    async function loadAIChallenges() {
+      try {
+        const all = await DBService.getChallenges();
+        aiChallengesCache = all.filter(c => c.aiGenerated);
+        renderAIChallengesList();
+      } catch(e) { /* silent */ }
+    }
+
+    function renderAIChallengesList() {
+      const list = document.getElementById('ai-challenges-list');
+      const count = document.getElementById('ai-challenges-count');
+      count.textContent = aiChallengesCache.length + ' challenge(s)';
+      if (aiChallengesCache.length === 0) {
+        list.innerHTML = `
+          <div class="p-8 bg-white rounded-2xl border border-dashed border-slate-300 text-center text-slate-400 text-xs">
+            <span class="material-symbols-outlined text-3xl mb-2 block opacity-30">auto_awesome</span>
+            No challenges generated yet. Click <strong>"Generate Challenge with AI"</strong> to create your first one.
+          </div>`;
+        return;
+      }
+      list.innerHTML = aiChallengesCache.map(c => `
+        <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2 hover:border-brand/40 transition-colors">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <span class="text-sm font-bold text-ink">${c.title}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                  c.difficulty === 'Beginner' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                  c.difficulty === 'Advanced' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                  'bg-blue-50 text-brand border border-blue-200'
+                }">${c.difficulty}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-indigo-50 text-indigo-700 border border-indigo-200">AI Generated</span>
+              </div>
+              <p class="text-xs text-slateMuted line-clamp-2">${c.description || ''}</p>
+            </div>
+            <span class="shrink-0 text-[11px] font-mono text-slate-400">${c.durationMinutes || 30}min</span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            ${(c.requiredSkills || []).map(s => `<span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-mono">${s}</span>`).join('')}
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono">${c.testCases ? c.testCases.length : 0} test cases · Published ${new Date(c.createdAt || Date.now()).toLocaleDateString()}</div>
+        </div>
+      `).join('');
+    }
+
+    function onChallengePublished(challenge) {
+      aiChallengesCache.unshift(challenge);
+      renderAIChallengesList();
+      // Switch to challenges tab to show the new one
+      switchTab('challenges');
+    }
+
+    // Load challenges when switching to that tab
+    const _origSwitchTab = window.switchTab;
   </script>
 </body>
 </html>

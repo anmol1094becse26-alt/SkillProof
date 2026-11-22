@@ -226,12 +226,21 @@
             <p class="text-xs text-slateMuted">Solve live challenges inside the IDE sandbox to mint new verified competencies.</p>
           </div>
 
-          <!-- Category Filter Pills -->
-          <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-            <button onclick="filterChallenges('All')" class="category-pill active px-3 py-1.5 rounded-lg bg-white text-brand shadow-sm transition-all" data-cat="All">All</button>
-            <button onclick="filterChallenges('Algorithms')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="Algorithms">Algorithms</button>
-            <button onclick="filterChallenges('System Design')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="System Design">System Design</button>
-            <button onclick="filterChallenges('Security')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="Security">Security</button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- AI Generate button -->
+            <button onclick="ChallengeGeneratorModal.open({ onPublish: onStudentChallengePublished })"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all">
+              <span class="material-symbols-outlined text-sm">auto_awesome</span>
+              <span>Generate with AI</span>
+            </button>
+
+            <!-- Category Filter Pills -->
+            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+              <button onclick="filterChallenges('All')" class="category-pill active px-3 py-1.5 rounded-lg bg-white text-brand shadow-sm transition-all" data-cat="All">All</button>
+              <button onclick="filterChallenges('Algorithms')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="Algorithms">Algorithms</button>
+              <button onclick="filterChallenges('System Design')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="System Design">System Design</button>
+              <button onclick="filterChallenges('Security')" class="category-pill px-3 py-1.5 rounded-lg text-slate-600 hover:text-ink transition-all" data-cat="Security">Security</button>
+            </div>
           </div>
         </div>
 
@@ -351,6 +360,8 @@
   <script src="js/passport-service.js"></script>
   <script src="js/job-matching.js"></script>
   <script src="js/notification-service.js"></script>
+  <script src="js/ai-service.js"></script>
+  <script src="js/challenge-generator-modal.js"></script>
 
   <script>
     let currentUser = null;
@@ -654,6 +665,18 @@
       await DBService.markAllNotificationsRead(currentUser.uid);
       NotificationService.updateBadgeUI(currentUser.uid);
       NotificationService.renderNotificationDrawer(currentUser.uid, "notif-drawer-content");
+    }
+
+    // ── AI Challenge Generator callback ───────────────────────────────────
+    function onStudentChallengePublished(challenge) {
+      // Add to local list and re-render grid
+      allChallenges.unshift(challenge);
+      filterChallenges('All');
+      NotificationService.showToast(
+        'Challenge Live!',
+        `"${challenge.title}" is now available. Start solving it now!`,
+        'success'
+      );
     }
   </script>
 </body>

@@ -1,6 +1,21 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
+
+// ── Load .env if present ──────────────────────────────────────────────────
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+    const [key, ...rest] = trimmed.split('=');
+    const value = rest.join('=').trim();
+    if (key && value) process.env[key.trim()] = value;
+  });
+  console.log('[ENV] Loaded .env configuration');
+}
 
 const PORT = 5000;
 
@@ -74,6 +89,19 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`   SKILLPROOF LIVE PRODUCTION SERVER RUNNING ON PORT ${PORT}`);
   console.log(`   Serving Directory: ${APP_DIR}`);
   console.log(`   URL: http://localhost:${PORT}/`);
-  console.log(`   Supabase Connected: https://wosrzuibwgtvulnrrhte.supabase.co`);
   console.log(`===================================================================`);
+
+  // ── Spawn the AI API server on port 5001 ─────────────────────────────
+  const apiServerPath = path.join(__dirname, 'server', 'server.js');
+  if (fs.existsSync(apiServerPath)) {
+    const apiProc = spawn(process.execPath, [apiServerPath], {
+      env: { ...process.env, PORT: '5001' },
+      stdio: 'inherit',
+      windowsHide: false
+    });
+    apiProc.on('error', err => console.error('[API Server] Failed to start:', err.message));
+    console.log('[ONLINE] AI API Server      → http://localhost:5001/api');
+  } else {
+    console.warn('[WARN] server/server.js not found — AI features require the API server.');
+  }
 });

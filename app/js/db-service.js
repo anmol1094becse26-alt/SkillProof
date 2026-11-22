@@ -19,6 +19,19 @@ const DBService = (function () {
     return challenges;
   }
 
+  async function createChallenge(challengeData) {
+    const db = getDB();
+    const id = challengeData.challengeId || ("chl_ai_" + Date.now());
+    const payload = {
+      ...challengeData,
+      challengeId: id,
+      aiGenerated: true,
+      createdAt: challengeData.createdAt || new Date().toISOString()
+    };
+    await db.setDoc(db.doc("challenges", id), payload);
+    return payload;
+  }
+
   async function getChallengeById(challengeId) {
     const db = getDB();
     const docSnap = await db.getDoc(db.doc("challenges", challengeId));
@@ -338,6 +351,7 @@ const DBService = (function () {
   return {
     getChallenges,
     getChallengeById,
+    createChallenge,
     getSubmissions,
     createSubmission,
     getEvaluations,
